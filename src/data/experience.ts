@@ -6,7 +6,7 @@ export const experience = [
     dates: "2026 – Present",
     industry: ["Various"],
     stage: ["Seed", "Series A"],
-    tags: ["Product Strategy", "Roadmapping", "User Research", "AI/ML", "Startups"],
+    tags: ["Product Strategy", "Roadmapping", "User Research", "AI", "Startups"],
     current: true,
   },
   {
@@ -16,7 +16,7 @@ export const experience = [
     dates: "2025-2026",
     industry: ["Healthcare Tech"],
     stage: ["Series D–E"],
-    tags: ["B2B", "SaaS", "AI/ML", "Team Leadership"],
+    tags: ["B2B", "SaaS", "AI", "Team Leadership", "CX", "Clinical Workflows"],
   },
   {
     company: "Arc Boat Company",
@@ -30,19 +30,19 @@ export const experience = [
   {
     company: "Uber",
     url: "https://www.uber.com/",
-    title: "Operations, Program Management, Product Management",
+    title: "Senior Operations Manager, Lead Product Manager",
     dates: "2014 – 2021",
     industry: ["Transportation & Mobility"],
     stage: ["Series C–IPO"],
-    tags: ["Marketplace", "Payments", "Maps", "Operations", "Global Scale"],
+    tags: ["Marketplace", "Payments", "Maps", "Operations", "Internationalization", "Search", "Personalization"],
   },
   {
     company: "ZS Associates",
     url: "https://www.zs.com/",
     title: "Associate Consultant",
     dates: "2010 – 2014",
-    industry: ["Management Consulting"],
+    industry: ["Management Consulting", "Healthcare"],
     stage: ["Enterprise"],
-    tags: ["Pharma", "Market Research", "Compensation Modeling", "Analytics"],
+    tags: ["Pharma", "Market Research", "Modeling", "Analytics"],
   },
 ];
