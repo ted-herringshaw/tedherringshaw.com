@@ -1,0 +1,60 @@
+---
+const hireFor = [
+  "Lead product when you don't have a product leader",
+  "Turn a reactive roadmap into one tied to outcomes",
+  "Take a new product from zero to one",
+  "Run user research and discovery",
+  "Figure out where AI actually helps your business",
+  "Raise the bar on quality and taste",
+];
+
+const dontHireFor = [
+  "Keep Jira tidy",
+  "Make deep technical architecture calls",
+  "Run growth experiments and conversion funnels",
+  "Scale a 50-person product org",
+  "Work without access to customers",
+];
+---
+
+<section id="right-fit" class="py-20 px-6 bg-surface fade-in">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="font-heading font-medium text-[2rem] tracking-tight mb-12">
+      Am I the right fit?
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+      <div>
+        <h3 class="font-heading font-medium text-lg text-terracotta mb-5">
+          Hire me to…
+        </h3>
+        <ul class="space-y-3">
+          {hireFor.map(item => (
+            <li class="flex items-start gap-3 text-[15px] text-ink/90 leading-relaxed">
+              <svg class="w-5 h-5 text-terracotta flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="font-heading font-medium text-lg text-muted mb-5">
+          Don't hire me to…
+        </h3>
+        <ul class="space-y-3">
+          {dontHireFor.map(item => (
+            <li class="flex items-start gap-3 text-[15px] text-muted leading-relaxed">
+              <svg class="w-5 h-5 text-border flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

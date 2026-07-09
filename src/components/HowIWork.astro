@@ -1,0 +1,51 @@
+---
+const models = [
+  {
+    label: "Ongoing",
+    title: "Role fill",
+    description: "I embed in your team as a fractional Head of Product or VP Product. I talk to users, own the roadmap, spec and prototype features, and ship with your engineers. Typically 2–3 days per week.",
+    bestFor: "Teams that need experienced product guidance but aren't ready for a full-time hire",
+  },
+  {
+    label: "Defined scope",
+    title: "Project-based",
+    description: "A defined engagement with a clear deliverable: a product strategy, a roadmap, a PRD, a hiring plan, a user research sprint. Typically 2–6 weeks.",
+    bestFor: "Teams with a specific unsolved problem",
+  },
+  {
+    label: "Lightweight",
+    title: "Advising",
+    description: "Ongoing access to a senior product brain. Regular calls, async Slack or email, document reviews. A sounding board when you need one. Typically hourly or monthly retainer.",
+    bestFor: "Founders running product who need a thought partner",
+  },
+];
+---
+
+<section id="how-i-work" class="py-20 px-6 fade-in">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="font-heading font-medium text-[2rem] tracking-tight mb-12">
+      How I work
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {models.map(m => (
+        <div class="border border-border rounded-lg p-6 flex flex-col">
+          <span class="text-xs font-medium uppercase tracking-wider text-terracotta mb-3">
+            {m.label}
+          </span>
+          <h3 class="font-heading font-medium text-lg text-ink mb-2">
+            {m.title}
+          </h3>
+          <p class="text-sm text-muted leading-relaxed mb-5 flex-1">
+            {m.description}
+          </p>
+          <div class="bg-terracotta-light rounded-md px-4 py-3 min-h-[60px] flex items-start">
+            <p class="text-xs text-terracotta-dark text-left">
+              <span class="font-medium">Best for:</span> {m.bestFor}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

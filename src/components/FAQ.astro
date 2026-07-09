@@ -1,0 +1,28 @@
+---
+import { faq } from '../data/faq';
+---
+
+<section class="py-20 px-6 bg-surface fade-in">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="font-heading font-medium text-[2rem] tracking-tight mb-12">
+      Common questions
+    </h2>
+
+    <div class="space-y-0">
+      {faq.map(item => (
+        <details class="group border-b border-border">
+          <summary class="flex items-center justify-between py-5 cursor-pointer list-none text-[15px] font-medium text-ink hover:text-terracotta transition-colors">
+            {item.question}
+            <svg class="w-5 h-5 text-muted flex-shrink-0 ml-4 transition-transform group-open:rotate-45" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <line x1="10" y1="4" x2="10" y2="16" />
+              <line x1="4" y1="10" x2="16" y2="10" />
+            </svg>
+          </summary>
+          <p class="pb-5 text-sm text-muted leading-relaxed max-w-xl">
+            {item.answer}
+          </p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

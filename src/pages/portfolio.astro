@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const passwordHash = import.meta.env.PORTFOLIO_PASSWORD_HASH || "placeholder";
+---
+
+<BaseLayout title="Portfolio — Ted Herringshaw" description="Selected work and case studies.">
+  <div class="min-h-[80vh] flex items-center justify-center px-6 py-20">
+
+    <div id="gate" class="max-w-sm w-full text-center">
+      <h1 class="font-heading font-medium text-2xl tracking-tight mb-3">
+        Portfolio
+      </h1>
+      <p class="text-sm text-muted mb-8">
+        This section is for prospective clients. Enter the password I shared with you to continue.
+      </p>
+      <form id="password-form" class="flex flex-col gap-3">
+        <input
+          type="password"
+          id="password-input"
+          placeholder="Enter password"
+          autocomplete="off"
+          class="w-full px-4 py-2.5 text-sm border border-border rounded-md bg-cream text-ink placeholder:text-muted/50 focus:outline-none focus:border-terracotta transition-colors"
+        />
+        <button
+          type="submit"
+          class="w-full text-sm font-medium text-cream bg-terracotta hover:bg-terracotta-dark px-4 py-2.5 rounded-md transition-colors"
+        >
+          View portfolio
+        </button>
+        <p id="error-msg" class="text-xs text-red-500 hidden">
+          Incorrect password. Please try again.
+        </p>
+      </form>
+    </div>
+
+    <div id="portfolio-content" class="max-w-4xl w-full hidden">
+      <h1 class="font-heading font-medium text-[2rem] tracking-tight mb-4">
+        Portfolio
+      </h1>
+      <p class="text-muted mb-12">
+        Selected work and case studies. More detail available on request.
+      </p>
+
+      <div class="space-y-8">
+        <div class="border border-border rounded-lg p-8">
+          <span class="text-xs font-medium uppercase tracking-wider text-terracotta">Coming soon</span>
+          <h2 class="font-heading font-medium text-xl mt-3 mb-2">Case studies are on the way</h2>
+          <p class="text-sm text-muted leading-relaxed max-w-xl">
+            I'm putting together detailed case studies from my work at Uber, Arc, and Dandy. In the meantime, feel free to reach out directly and I'll walk you through relevant examples.
+          </p>
+          <a
+            href="mailto:tedherringshaw@gmail.com"
+            class="inline-block mt-4 text-sm font-medium text-terracotta hover:text-terracotta-dark transition-colors"
+          >
+            Email me &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>
+
+<script define:vars={{ passwordHash }}>
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  const gate = document.getElementById("gate");
+  const content = document.getElementById("portfolio-content");
+  const form = document.getElementById("password-form");
+  const input = document.getElementById("password-input");
+  const errorMsg = document.getElementById("error-msg");
+
+  if (sessionStorage.getItem("portfolio-auth") === "true") {
+    gate.classList.add("hidden");
+    content.classList.remove("hidden");
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const hash = await sha256(input.value);
+    if (hash === passwordHash) {
+      sessionStorage.setItem("portfolio-auth", "true");
+      gate.classList.add("hidden");
+      content.classList.remove("hidden");
+    } else {
+      errorMsg.classList.remove("hidden");
+      input.value = "";
+      input.focus();
+    }
+  });
+</script>

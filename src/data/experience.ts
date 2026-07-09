@@ -1,0 +1,43 @@
+export const experience = [
+  {
+    company: "Fractional Product Leadership",
+    title: "Solo Shop",
+    dates: "2026 – Present",
+    industry: ["Various"],
+    stage: ["Seed", "Series A"],
+    tags: ["Product Strategy", "Roadmapping", "User Research", "AI/ML", "Startups"],
+    current: true,
+  },
+  {
+    company: "Dandy",
+    title: "Director of Product",
+    dates: "2025-2026",
+    industry: ["Healthcare Tech"],
+    stage: ["Series D–E"],
+    tags: ["B2B", "SaaS", "AI/ML", "Team Leadership"],
+  },
+  {
+    company: "Arc Boat Company",
+    title: "Head of Product",
+    dates: "2021 – 2025",
+    industry: ["Electric Vehicles"],
+    stage: ["Seed–Series B"],
+    tags: ["Hardware", "Software", "Go-to-Market", "User Research", "0→1"],
+  },
+  {
+    company: "Uber",
+    title: "Operations, Program Management, Product Management",
+    dates: "2014 – 2021",
+    industry: ["Transportation & Mobility"],
+    stage: ["Series C–IPO"],
+    tags: ["Marketplace", "Payments", "Maps", "Operations", "Global Scale"],
+  },
+  {
+    company: "ZS Associates",
+    title: "Associate Consultant",
+    dates: "2010 – 2014",
+    industry: ["Management Consulting"],
+    stage: ["Enterprise"],
+    tags: ["Pharma", "Market Research", "Compensation Modeling", "Analytics"],
+  },
+];

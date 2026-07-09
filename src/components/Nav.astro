@@ -1,0 +1,117 @@
+---
+const links = [
+  { href: "#what-i-do", label: "What I do" },
+  { href: "#how-i-work", label: "How I work" },
+  { href: "#right-fit", label: "Fit" },
+  { href: "#background", label: "Experience" },
+];
+---
+
+<nav id="site-nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/" class="font-heading font-medium text-[15px] tracking-wide text-ink">
+      Ted Herringshaw
+    </a>
+
+    <div class="hidden md:flex items-center gap-6">
+      {links.map(link => (
+        <a
+          href={link.href}
+          data-nav-link
+          class="text-[14px] text-muted hover:text-ink transition-colors"
+        >
+          {link.label}
+        </a>
+      ))}
+      <a
+        href="#contact"
+        class="text-[13px] font-medium text-cream bg-terracotta hover:bg-terracotta-dark px-4 py-2 rounded-md transition-colors"
+      >
+        Get in touch
+      </a>
+    </div>
+
+    <button
+      id="menu-toggle"
+      class="md:hidden p-2 -mr-2 text-muted hover:text-ink"
+      aria-label="Open menu"
+      aria-expanded="false"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <line x1="4" y1="7" x2="20" y2="7" />
+        <line x1="4" y1="12" x2="20" y2="12" />
+        <line x1="4" y1="17" x2="20" y2="17" />
+      </svg>
+    </button>
+  </div>
+
+  <div id="mobile-menu" class="md:hidden hidden bg-cream/95 backdrop-blur-sm border-b border-border">
+    <div class="px-6 py-4 flex flex-col gap-3">
+      {links.map(link => (
+        <a href={link.href} class="text-[15px] text-muted hover:text-ink transition-colors py-1 mobile-link">
+          {link.label}
+        </a>
+      ))}
+      <a
+        href="#contact"
+        class="text-[14px] font-medium text-cream bg-terracotta hover:bg-terracotta-dark px-4 py-2.5 rounded-md transition-colors text-center mt-2 mobile-link"
+      >
+        Get in touch
+      </a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const nav = document.getElementById("site-nav")!;
+  const toggle = document.getElementById("menu-toggle")!;
+  const menu = document.getElementById("mobile-menu")!;
+
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 50) {
+      nav.classList.add("bg-cream/95", "backdrop-blur-sm", "shadow-sm");
+    } else {
+      nav.classList.remove("bg-cream/95", "backdrop-blur-sm", "shadow-sm");
+    }
+  });
+
+  toggle.addEventListener("click", () => {
+    const open = menu.classList.toggle("hidden");
+    toggle.setAttribute("aria-expanded", String(!open));
+  });
+
+  menu.querySelectorAll(".mobile-link").forEach(link => {
+    link.addEventListener("click", () => {
+      menu.classList.add("hidden");
+      toggle.setAttribute("aria-expanded", "false");
+    });
+  });
+
+  const navLinks = document.querySelectorAll<HTMLAnchorElement>("[data-nav-link]");
+  const sections = Array.from(navLinks).map(link => {
+    const id = link.getAttribute("href")!.replace("#", "");
+    return document.getElementById(id);
+  }).filter(Boolean) as HTMLElement[];
+
+  const sectionObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navLinks.forEach(link => {
+            if (link.getAttribute("href") === `#${id}`) {
+              link.classList.add("text-ink", "font-medium");
+              link.classList.remove("text-muted");
+            } else {
+              link.classList.remove("text-ink", "font-medium");
+              link.classList.add("text-muted");
+            }
+          });
+        }
+      });
+    },
+    { rootMargin: "-40% 0px -55% 0px" }
+  );
+
+  sections.forEach(section => sectionObserver.observe(section));
+</script>

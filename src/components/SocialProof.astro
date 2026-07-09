@@ -1,0 +1,27 @@
+---
+import { metrics } from '../data/proof';
+---
+
+<section id="results" class="py-20 px-6 fade-in">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="font-heading font-medium text-[2rem] tracking-tight mb-12">
+      Results
+    </h2>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {metrics.map(m => (
+        <div class="border border-border rounded-lg p-6">
+          <p class="font-heading font-bold text-3xl text-terracotta mb-1">
+            {m.value}
+          </p>
+          <p class="text-sm text-ink/90 leading-snug mb-1">
+            {m.label}
+          </p>
+          <p class="text-xs text-muted">
+            {m.context}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
