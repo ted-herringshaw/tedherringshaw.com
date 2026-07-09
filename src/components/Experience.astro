@@ -20,15 +20,22 @@ import { experience } from '../data/experience';
       Product leader with 16 years of career experience across software and hardware businesses. Generalist who enjoys new problem spaces and building products that need to withstand the messiness of the real world.
     </p>
 
-    <div class="space-y-0">
+    <div class="relative space-y-0">
+      <div class="absolute left-0 top-[10px] bottom-[10px] w-px bg-border"></div>
       {experience.map((role) => (
-        <div class="relative pl-8 pb-12 last:pb-0 border-l border-border group">
-          <div class={`absolute left-[-5px] top-1.5 w-2.5 h-2.5 rounded-full ${role.current ? 'bg-terracotta' : 'bg-border'}`}></div>
+        <div class="relative pl-8 pb-12 last:pb-0 group">
+          <div class={`absolute left-[-5px] top-[10px] w-2.5 h-2.5 rounded-full ${role.current ? 'bg-terracotta' : 'bg-border'} z-10`}></div>
 
           <div class="flex flex-col sm:flex-row sm:items-baseline sm:gap-3 mb-1">
-            <h3 class="font-heading font-medium text-lg text-ink">
-              {role.company}
-            </h3>
+            {role.url ? (
+              <h3 class="font-heading font-medium text-lg text-ink">
+                <a href={role.url} target="_blank" rel="noopener" class="hover:text-terracotta transition-colors">{role.company}</a>
+              </h3>
+            ) : (
+              <h3 class="font-heading font-medium text-lg text-ink">
+                {role.company}
+              </h3>
+            )}
             <span class="text-sm text-muted">{role.dates}</span>
           </div>
 
@@ -55,8 +62,5 @@ import { experience } from '../data/experience';
       ))}
     </div>
 
-    <p class="mt-10 pl-8 text-sm text-muted">
-      University of Michigan, Ross School of Business — BBA, Marketing & Strategy, 2010
-    </p>
   </div>
 </section>

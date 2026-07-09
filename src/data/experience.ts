@@ -1,6 +1,7 @@
 export const experience = [
   {
     company: "Fractional Product Leadership",
+    url: "",
     title: "Solo Shop",
     dates: "2026 – Present",
     industry: ["Various"],
@@ -10,6 +11,7 @@ export const experience = [
   },
   {
     company: "Dandy",
+    url: "https://www.meetdandy.com/",
     title: "Director of Product",
     dates: "2025-2026",
     industry: ["Healthcare Tech"],
@@ -18,6 +20,7 @@ export const experience = [
   },
   {
     company: "Arc Boat Company",
+    url: "https://www.arcboats.com/",
     title: "Head of Product",
     dates: "2021 – 2025",
     industry: ["Electric Vehicles"],
@@ -26,6 +29,7 @@ export const experience = [
   },
   {
     company: "Uber",
+    url: "https://www.uber.com/",
     title: "Operations, Program Management, Product Management",
     dates: "2014 – 2021",
     industry: ["Transportation & Mobility"],
@@ -34,6 +38,7 @@ export const experience = [
   },
   {
     company: "ZS Associates",
+    url: "https://www.zs.com/",
     title: "Associate Consultant",
     dates: "2010 – 2014",
     industry: ["Management Consulting"],
