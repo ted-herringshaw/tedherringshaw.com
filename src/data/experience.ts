@@ -5,7 +5,7 @@ export const experience = [
     title: "Solo Shop",
     dates: "2026 – Present",
     industry: ["Various"],
-    stage: ["Seed", "Series A"],
+    stage: ["Seed", "Series A", "Series B"],
     tags: ["Product Strategy", "Roadmapping", "User Research", "AI", "Startups"],
     current: true,
   },
