@@ -20,9 +20,10 @@ pnpm-debug.log*
 # macOS-specific files
 .DS_Store
 
-# backup images
+# backup images / source originals
 *-original.gif
 Orders Apr 2026.png
+IMG_7252.jpeg
 
 # jetbrains setting folder
 .idea/

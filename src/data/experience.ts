@@ -16,7 +16,7 @@ export const experience = [
     dates: "2025-2026",
     industry: ["Healthcare Tech"],
     stage: ["Series D–E"],
-    tags: ["B2B", "SaaS", "AI", "Team Leadership", "CX", "Clinical Workflows"],
+    tags: ["B2B", "SaaS", "AI", "CX", "Clinical Workflows", "Billing"],
   },
   {
     company: "Arc Boat Company",
@@ -41,8 +41,8 @@ export const experience = [
     url: "https://www.zs.com/",
     title: "Associate Consultant",
     dates: "2010 – 2014",
-    industry: ["Management Consulting", "Healthcare"],
+    industry: ["Management Consulting"],
     stage: ["Enterprise"],
-    tags: ["Pharma", "Market Research", "Modeling", "Analytics"],
+    tags: ["Pharma", "Healthcare", "Market Research", "Modeling", "Analytics"],
   },
 ];
