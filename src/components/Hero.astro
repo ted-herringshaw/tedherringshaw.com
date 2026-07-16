@@ -2,7 +2,7 @@
 
 ---
 
-<section class="relative overflow-hidden min-h-[85vh] lg:min-h-[70vh] flex items-start lg:items-center pt-24 pb-12 px-6">
+<section class="relative overflow-hidden min-h-[85dvh] lg:min-h-[70dvh] flex items-start lg:items-center pt-24 pb-12 px-6">
   <div class="lg:hidden absolute inset-0 z-0 bg-no-repeat" style="background-image:url('/images/ted-portrait.webp'); background-size:130%; background-position:center 66%;">
     <div class="absolute inset-0 bg-gradient-to-b from-cream from-[28%] to-transparent to-[72%]"></div>
   </div>
@@ -48,7 +48,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .rotator__word {
-      transition: none;
+      transition: opacity 0.4s ease;
     }
   }
 </style>
@@ -56,22 +56,24 @@
 <script>
   const wordEl = document.querySelector<HTMLElement>(".rotator__word");
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (wordEl && !reduce) {
+  if (wordEl) {
     const words = ["Leader", "Builder", "Operator", "Owner", "Strategist", "Generalist"];
     let i = 0;
     setInterval(() => {
-      wordEl.style.transform = "translateY(-115%)";
       wordEl.style.opacity = "0";
+      if (!reduce) wordEl.style.transform = "translateY(-115%)";
       setTimeout(() => {
         i = (i + 1) % words.length;
         wordEl.textContent = words[i];
-        wordEl.style.transition = "none";
-        wordEl.style.transform = "translateY(115%)";
-        wordEl.getBoundingClientRect(); // force reflow
-        wordEl.style.transition = "";
-        wordEl.style.transform = "translateY(0)";
+        if (!reduce) {
+          wordEl.style.transition = "none";
+          wordEl.style.transform = "translateY(115%)";
+          wordEl.getBoundingClientRect(); // force reflow
+          wordEl.style.transition = "";
+          wordEl.style.transform = "translateY(0)";
+        }
         wordEl.style.opacity = "1";
-      }, 450);
+      }, reduce ? 250 : 450);
     }, 2400);
   }
 </script>
