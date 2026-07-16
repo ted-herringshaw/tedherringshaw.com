@@ -11,10 +11,13 @@
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-10 lg:gap-12">
       <div class="max-w-lg">
         <h1 class="font-heading font-bold text-[clamp(2.25rem,5vw,3.25rem)] leading-[1.08] tracking-tight text-ink">
-          Ship better stuff
+          Fractional Product
+          <span class="rotator block overflow-hidden">
+            <span class="rotator__word inline-block text-terracotta">Leader</span>
+          </span>
         </h1>
         <p class="mt-5 text-[clamp(1rem,2vw,1.125rem)] text-muted leading-relaxed">
-          I'm a product leader with 16 years of career experience across software and hardware businesses. I work with startups and founders to solve messy real-world product problems.
+          I work with startups and founders to ship products that survive contact with the messiness of the real world.
         </p>
         <div class="mt-8">
           <a
@@ -34,3 +37,41 @@
     </div>
   </div>
 </section>
+
+<style>
+  .rotator {
+    height: 1.15em;
+  }
+  .rotator__word {
+    line-height: 1.15;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rotator__word {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const wordEl = document.querySelector<HTMLElement>(".rotator__word");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (wordEl && !reduce) {
+    const words = ["Leader", "Builder", "Operator", "Owner", "Strategist", "Generalist"];
+    let i = 0;
+    setInterval(() => {
+      wordEl.style.transform = "translateY(-115%)";
+      wordEl.style.opacity = "0";
+      setTimeout(() => {
+        i = (i + 1) % words.length;
+        wordEl.textContent = words[i];
+        wordEl.style.transition = "none";
+        wordEl.style.transform = "translateY(115%)";
+        wordEl.getBoundingClientRect(); // force reflow
+        wordEl.style.transition = "";
+        wordEl.style.transform = "translateY(0)";
+        wordEl.style.opacity = "1";
+      }, 450);
+    }, 2400);
+  }
+</script>
