@@ -6,7 +6,7 @@ export const experience = [
     dates: "2026 – Present",
     industry: ["Various"],
     stage: ["Seed", "Series A", "Series B"],
-    tags: ["Product Strategy", "Roadmapping", "User Research", "AI", "Startups"],
+    tags: ["Product Strategy", "Roadmapping", "User Research", "AI", "UI/UX"],
     current: true,
   },
   {
