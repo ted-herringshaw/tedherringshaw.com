@@ -105,7 +105,7 @@ body {
 
 .side-col {
   flex: 1 1 160px;
-  min-width: 150px;
+  min-width: 220px;
   max-width: 230px;
   display: flex;
   flex-direction: column;
@@ -153,6 +153,7 @@ body {
   border-radius: 24px 16px 26px 14px;
   transform: rotate(1deg);
   flex: 1;
+  min-height: 226px; /* keep pace with .panel-pink's 3-row streaming-icon grid so the two side columns stay matched */
 }
 .panel-lime {
   background: var(--lime);
