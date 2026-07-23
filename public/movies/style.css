@@ -1,0 +1,778 @@
+:root {
+  --cyan: #38f0ff;
+  --cyan-ink: #08344a;
+  --orange: #ff8a3b;
+  --orange-ink: #5a2600;
+  --lime: #b6ff3b;
+  --lime-ink: #1f4a00;
+  --pink: #ff2bd0;
+  --pink-ink: #4a0038;
+  --yellow: #ffe600;
+  --yellow-ink: #5a4a00;
+  --purple: #a24bff;
+  --hotpink: #ff5b8a;
+  --red: #ff2b3b;
+  --curtain: #b31025;
+  --bg-deep: #12001f;
+  --text-light: #f4f0ff;
+  --text-muted: #cbb8ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Comic Neue", "Comic Sans MS", cursive;
+  color: var(--text-light);
+  background: var(--bg-deep);
+  overflow-x: hidden;
+  padding: 20px 14px 50px;
+}
+
+.bg-swirl {
+  position: fixed;
+  inset: -30%;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(2px);
+}
+.bg-swirl-1 {
+  background: conic-gradient(from 0deg, #ff4fd8, #ffe600, #38f0ff, #b6ff3b, #ff8a00, #ff2b6d, #a24bff, #ff4fd8);
+  opacity: 0.35;
+  animation: spin360 44s linear infinite;
+}
+.bg-swirl-2 {
+  background: conic-gradient(from 180deg, #00e0ff, #ff2bd0, #b6ff3b, #ffe600, #00e0ff);
+  opacity: 0.2;
+  mix-blend-mode: screen;
+  animation: spin360 30s linear infinite reverse;
+}
+@keyframes spin360 {
+  to { transform: rotate(360deg); }
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Marquee title ---------- */
+
+.marquee-title {
+  text-align: center;
+}
+
+.marquee-pill {
+  display: inline-block;
+  border: 4px solid #000;
+  border-radius: 40px;
+  background: linear-gradient(var(--yellow), var(--orange));
+  padding: 12px 32px;
+  font-family: "Bungee", cursive;
+  font-size: clamp(22px, 5vw, 40px);
+  color: #d6155e;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0 #2b0a75;
+  animation: titlewob 3.2s ease-in-out infinite, titleglow 3.6s ease-in-out infinite;
+}
+@keyframes titlewob {
+  0%, 100% { transform: rotate(-1.5deg) scale(1); }
+  50% { transform: rotate(1.5deg) scale(1.02); }
+}
+@keyframes titleglow {
+  0%, 100% { box-shadow: 6px 6px 0 #000, 0 0 0 4px #ff2bd0, 0 0 24px 6px rgba(255, 43, 208, 0.6); }
+  50% { box-shadow: 6px 6px 0 #000, 0 0 0 4px #38f0ff, 0 0 34px 12px rgba(56, 240, 255, 0.7); }
+}
+
+/* ---------- Theater grid layout ---------- */
+
+.theater-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.side-col {
+  flex: 1 1 160px;
+  min-width: 150px;
+  max-width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.center-col {
+  position: relative;
+  flex: 3 1 420px;
+  min-width: 280px;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- Panels ---------- */
+
+.panel {
+  border: 4px solid #000;
+  padding: 10px 12px;
+  box-shadow: 5px 5px 0 #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.panel-label {
+  font-family: "Bungee", cursive;
+  font-size: 12px;
+  margin-bottom: 6px;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.panel-cyan {
+  background: var(--cyan);
+  color: var(--cyan-ink);
+  border-radius: 18px 26px 14px 24px;
+  transform: rotate(-1.2deg);
+  flex: 1;
+}
+.panel-orange {
+  background: var(--orange);
+  color: var(--orange-ink);
+  border-radius: 24px 16px 26px 14px;
+  transform: rotate(1deg);
+  flex: 1;
+}
+.panel-lime {
+  background: var(--lime);
+  color: var(--lime-ink);
+  border-radius: 22px 14px 24px 16px;
+  transform: rotate(1.4deg);
+  flex: 1;
+}
+.panel-pink {
+  background: var(--pink);
+  color: var(--pink-ink);
+  border-radius: 14px 24px 16px 26px;
+  transform: rotate(-1deg);
+  flex: 1;
+}
+.panel-yellow {
+  background: var(--yellow);
+  color: var(--yellow-ink);
+  border-radius: 20px;
+  transform: rotate(-0.4deg);
+}
+
+.dial-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dial-readout {
+  font-family: "Bungee", cursive;
+  background: #000;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+#lengthValue { color: var(--lime); }
+#rtValue { color: #ff5b5b; }
+
+.hidden-range {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Lever dials ---------- */
+
+.dial-wrap {
+  width: 96px;
+  height: 132px;
+}
+
+.lever-dial {
+  position: relative;
+  width: 96px;
+  height: 132px;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.lever-track {
+  position: absolute;
+  top: 3px;
+  width: 56px;
+  height: 126px;
+  border: 5px solid #000;
+  box-shadow: 4px 4px 0 #000;
+}
+.lever-dial--left .lever-track {
+  right: 0;
+  border-right: none;
+  border-radius: 132px 0 0 132px;
+  background: conic-gradient(from 0deg at 100% 50%, #ff2b3b, #ff8a3b, #ffe600, #b6ff3b, #b6ff3b, #ffe600, #ff8a3b, #ff2b3b);
+}
+.lever-dial--right .lever-track {
+  left: 0;
+  border-left: none;
+  border-radius: 0 132px 132px 0;
+  background: conic-gradient(from 0deg at 0% 50%, #ff2b3b, #ff8a3b, #ffe600, #b6ff3b, #b6ff3b, #ffe600, #ff8a3b, #ff2b3b);
+}
+
+.lever-arm {
+  position: absolute;
+  top: 50%;
+  width: 68px;
+  height: 12px;
+  margin-top: -6px;
+  z-index: 4;
+  transition: transform 0.12s;
+}
+.lever-dial.dragging .lever-arm {
+  transition: none;
+}
+.lever-dial--left .lever-arm { right: 12px; transform-origin: 100% 50%; }
+.lever-dial--right .lever-arm { left: 12px; transform-origin: 0% 50%; }
+
+.lever-bar {
+  position: absolute;
+  inset: 0;
+  background: #111;
+  border-radius: 6px;
+  border: 2px solid #000;
+}
+
+.lever-ball {
+  position: absolute;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin-top: -17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #fff, #ff5b5b 60%, #b3101d);
+  border: 4px solid #000;
+  box-shadow: 2px 3px 0 #000;
+}
+.lever-dial--left .lever-ball { left: -16px; }
+.lever-dial--right .lever-ball { right: -16px; }
+
+.lever-pivot {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #fff, #b0b0c4);
+  border: 4px solid #000;
+  z-index: 5;
+}
+.lever-dial--left .lever-pivot { right: 4px; }
+.lever-dial--right .lever-pivot { left: 4px; }
+
+.lever-label {
+  position: absolute;
+  font-family: "Comic Neue", "Comic Sans MS", cursive;
+  font-weight: 700;
+  font-size: 9px;
+}
+.lever-dial--left .lever-label-top { left: -2px; top: 0; color: var(--cyan-ink); }
+.lever-dial--left .lever-label-bottom { left: 0; bottom: 0; color: var(--cyan-ink); }
+.lever-dial--right .lever-label-top { right: -2px; top: 0; color: var(--lime-ink); }
+.lever-dial--right .lever-label-bottom { right: 2px; bottom: 0; color: var(--lime-ink); }
+
+/* ---------- Sticker buttons (decade / genre / streaming) ---------- */
+
+.sticker-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.sticker-btn {
+  cursor: pointer;
+  font-family: "Comic Neue", "Comic Sans MS", cursive;
+  font-weight: 700;
+  border: 3px solid #000;
+  border-radius: 14px;
+  padding: 6px 11px;
+  font-size: 12px;
+  background: #fff;
+  color: #3a1a5a;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  transition: transform 0.1s ease;
+}
+.sticker-btn:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+}
+.sticker-btn.selected {
+  color: #000;
+  box-shadow: 4px 4px 0 #000, 0 0 0 3px #000;
+  font-weight: 700;
+}
+
+.genre-row {
+  justify-content: center;
+}
+
+.stream-sticker-btn {
+  width: 52px;
+  height: 52px;
+  padding: 4px;
+  border-radius: 12px;
+  border: 3px solid #000;
+  background: #e8e8f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+  opacity: 0.75;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+.stream-sticker-btn img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.stream-sticker-btn:hover {
+  transform: scale(1.1) !important;
+  opacity: 1;
+}
+.stream-sticker-btn.selected {
+  opacity: 1;
+  background: #fff;
+  box-shadow: 4px 4px 0 #000, 0 0 0 3px var(--yellow);
+  transform: scale(1.05) !important;
+}
+
+/* ---------- Spin button ---------- */
+
+.spin-btn {
+  display: block;
+  margin: 2px auto 0;
+  cursor: pointer;
+  font-family: "Bungee", cursive;
+  font-size: clamp(20px, 4vw, 34px);
+  color: #fff;
+  letter-spacing: 1px;
+  padding: clamp(12px, 1.8vh, 18px) clamp(30px, 5vw, 54px);
+  border: 5px solid #000;
+  border-radius: 60px;
+  background: linear-gradient(#ff2b6d, #c01050);
+  box-shadow: 8px 8px 0 #000, inset 0 -6px 0 rgba(0, 0, 0, 0.35);
+  text-shadow: 3px 3px 0 #000;
+  transition: transform 0.08s;
+}
+.spin-btn:not(:disabled):hover {
+  transform: translateY(-3px) rotate(1deg) scale(1.03);
+  box-shadow: 10px 12px 0 #000, inset 0 -6px 0 rgba(0, 0, 0, 0.35);
+}
+.spin-btn:not(:disabled):active {
+  transform: translateY(4px);
+  box-shadow: 3px 3px 0 #000, inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+}
+.spin-btn:disabled {
+  background: linear-gradient(#8a8a9a, #5a5a6a);
+  cursor: not-allowed;
+}
+
+/* ---------- Stage / theater ---------- */
+
+.stage {
+  position: relative;
+  width: 100%;
+  border: 6px solid #000;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 8px 8px 0 #000;
+  background: linear-gradient(#3a0d3a, #12001f);
+}
+
+.stage-valance {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 42px;
+  z-index: 7;
+  background: var(--curtain);
+  border-bottom: 3px solid #000;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 4px;
+}
+.stage-valance span {
+  font-family: "Bungee", cursive;
+  color: var(--yellow);
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.stage-lights {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+}
+.bulb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #ffe600 60%, #b58a00);
+  animation: bulbflash 1.4s ease-in-out infinite;
+}
+@keyframes bulbflash {
+  0%, 100% { opacity: 1; box-shadow: 0 0 10px 3px #ffe600, 0 0 18px 5px #ffe600; }
+  50% { opacity: 0.35; box-shadow: 0 0 3px 1px #ffe600; }
+}
+.stage-lights-top { top: 4px; left: 12px; right: 12px; justify-content: space-between; }
+.stage-lights-bottom { bottom: 4px; left: 12px; right: 12px; justify-content: space-between; }
+.stage-lights-left { top: 52px; bottom: 20px; left: 4px; flex-direction: column; justify-content: space-between; }
+.stage-lights-right { top: 52px; bottom: 20px; right: 4px; flex-direction: column; justify-content: space-between; }
+
+.curtain {
+  position: absolute;
+  top: 42px;
+  bottom: 0;
+  width: 54%;
+  z-index: 5;
+  background: var(--curtain);
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.5) 0px,
+    rgba(0, 0, 0, 0.05) 12px,
+    rgba(255, 255, 255, 0.18) 20px,
+    rgba(0, 0, 0, 0.05) 28px,
+    rgba(0, 0, 0, 0.5) 40px
+  );
+  transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1);
+}
+.curtain-left { left: 0; box-shadow: inset -30px 0 40px rgba(0, 0, 0, 0.55); }
+.curtain-right { right: 0; box-shadow: inset 30px 0 40px rgba(0, 0, 0, 0.55); }
+.stage.open .curtain-left { transform: translateX(-102%); }
+.stage.open .curtain-right { transform: translateX(102%); }
+
+.stage-screen {
+  /* Normal flow (not absolutely positioned) so the stage's own height
+     tracks whichever child is currently visible — tight for the idle
+     prompt, tight for a no-trailer result card, tall enough when a
+     trailer is showing — with no min-height guess and no internal
+     scrollbar. The valance/lights/curtains stay absolutely positioned
+     overlays and just cover whatever height this ends up being. */
+  position: relative;
+  margin: 46px 12px 12px 12px;
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 40%, #241236, #06010e);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1;
+  padding: 16px 10px 10px;
+}
+
+.stage-idle,
+.slot-machine {
+  min-height: 220px;
+}
+
+.stage-idle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: auto 0;
+  text-align: center;
+  animation: idlebob 2.6s ease-in-out infinite;
+}
+.stage-idle[hidden] {
+  display: none;
+}
+@keyframes idlebob {
+  0%, 100% { transform: translateY(0) rotate(-2.5deg); }
+  50% { transform: translateY(-10px) rotate(2.5deg); }
+}
+.idle-emoji { font-size: 56px; }
+.idle-label {
+  font-family: "Bungee", cursive;
+  color: var(--yellow);
+  font-size: 14px;
+  margin-top: 6px;
+  text-shadow: 2px 2px 0 #000;
+}
+.idle-value {
+  font-family: "Bungee", cursive;
+  color: #fff;
+  font-size: 20px;
+  text-shadow: 2px 2px 0 #000;
+}
+
+/* ---------- Spinning reel (behind closed curtains) ---------- */
+
+.slot-machine {
+  display: flex;
+  justify-content: center;
+  margin: auto 0;
+}
+.slot-machine[hidden] {
+  display: none;
+}
+.reel-window {
+  width: 170px;
+  height: 255px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 0 0 4px #000, 0 0 30px rgba(255, 230, 0, 0.3);
+}
+.reel-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-4px) rotate(-1deg); }
+  75% { transform: translateX(4px) rotate(1deg); }
+}
+.slot-machine.spinning .reel-window {
+  animation: shake 0.15s linear infinite;
+}
+
+/* ---------- Result card ---------- */
+
+.result {
+  width: 100%;
+}
+.result[hidden] {
+  display: none;
+}
+.result.reveal {
+  animation: posterdrop 0.85s cubic-bezier(0.3, 1.3, 0.5, 1) both;
+}
+@keyframes posterdrop {
+  0% { transform: translateY(-160%) rotate(-10deg); opacity: 0; }
+  55% { transform: translateY(7%) rotate(4deg); opacity: 1; }
+  72% { transform: translateY(-4%) rotate(-2deg); }
+  86% { transform: translateY(2%) rotate(1deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+.result-top {
+  display: flex;
+  gap: 10px;
+  background: linear-gradient(150deg, #fff, #ffe9fb);
+  border: 3px solid #000;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 3px 3px 0 #000;
+  color: #222;
+  text-align: left;
+}
+
+.result-poster {
+  width: 72px;
+  border-radius: 6px;
+  border: 2px solid #000;
+  flex-shrink: 0;
+}
+
+.result-details h2 {
+  font-family: "Bungee", cursive;
+  font-size: 14px;
+  color: #d6155e;
+  margin: 0 0 5px;
+  line-height: 1.15;
+}
+
+#resultMeta {
+  color: #2b0a75;
+  font-weight: 700;
+  font-size: 11px;
+  margin: 2px 0;
+}
+
+.result-overview {
+  color: #333;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 4px 0;
+}
+
+.watch-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.watch-label {
+  font-family: "Comic Neue", "Comic Sans MS", cursive;
+  font-weight: 700;
+  font-size: 10px;
+  color: #666;
+}
+
+.provider-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.provider-icons img {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+}
+.provider-icons .no-providers {
+  color: #666;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.trailer-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 52%;
+  margin-top: 8px;
+  border: 3px solid #000;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 3px 3px 0 #000;
+}
+.trailer-wrap[hidden] {
+  display: none;
+}
+.trailer-wrap iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ---------- Effects layer: confetti + floating text ---------- */
+
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  overflow: visible;
+}
+
+.fx-ding {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: "Bungee", cursive;
+  font-size: clamp(18px, 4.2vw, 34px);
+  text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+  animation: fadeup 1.3s ease-out forwards;
+  white-space: nowrap;
+}
+@keyframes fadeup {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(var(--r)); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.35) rotate(var(--r)); }
+  32% { transform: translate(-50%, -50%) scale(1) rotate(var(--r)); }
+  100% { opacity: 0; transform: translate(-50%, -140%) scale(1) rotate(var(--r)); }
+}
+
+.fx-popcorn {
+  position: absolute;
+  left: 44%;
+  top: 50%;
+  animation: popfly var(--dur) cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
+}
+@keyframes popfly {
+  0% { transform: translate(0, 0) rotate(0deg) scale(0.6); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) rotate(var(--pr)) scale(1); opacity: 0; }
+}
+
+/* ---------- Status line ---------- */
+
+.status {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 2px;
+  min-height: 1.2em;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 720px) {
+  /* Reflow to: banner, curtains, spin button (kept above the fold), a 2x2
+     of the four filter panels, then genres. .theater-grid and .side-col
+     are desktop-only grouping wrappers — display:contents removes their
+     own box so their children become direct grid items of .app and can
+     be placed independently via the areas below. */
+  .app {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "title  title"
+      "stage  stage"
+      "spin   spin"
+      "length score"
+      "era    stream"
+      "genre  genre"
+      "status status";
+    gap: 12px;
+  }
+
+  .theater-grid,
+  .side-col {
+    display: contents;
+  }
+
+  .marquee-title { grid-area: title; }
+  .center-col { grid-area: stage; }
+  .panel-cyan { grid-area: length; }
+  .panel-lime { grid-area: score; }
+  .panel-orange { grid-area: era; }
+  .panel-pink { grid-area: stream; }
+  .genre-panel { grid-area: genre; }
+  #spinButton { grid-area: spin; }
+  #statusMessage { grid-area: status; }
+
+  /* Drop the poster so the title card reads full-width — the overview
+     text wraps into fewer lines, keeping the reveal card shorter. */
+  .result-poster {
+    display: none;
+  }
+
+  /* Shrink the banner to fit "🍿 MOVIE NIGHT, BABY! 🍿" on one line —
+     the desktop clamp() floor (22px) is still too wide for a phone
+     screen, so scale it down further and tighten the padding to keep
+     the pill short vertically too. */
+  .marquee-pill {
+    font-size: clamp(13px, calc(7.5vw - 8px), 40px);
+    padding: 8px 14px;
+    white-space: nowrap;
+  }
+}

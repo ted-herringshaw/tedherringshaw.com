@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Night, Baby! 🍿</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bungee&family=Comic+Neue:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/movies/style.css" />
+</head>
+<body>
+  <div class="bg-swirl bg-swirl-1"></div>
+  <div class="bg-swirl bg-swirl-2"></div>
+
+  <div class="app">
+    <div class="marquee-title">
+      <div class="marquee-pill">🍿 MOVIE NIGHT, BABY! 🍿</div>
+    </div>
+
+    <div class="theater-grid">
+      <div class="side-col left-col">
+        <div class="panel panel-cyan dial-panel">
+          <div class="panel-label">⏱️ MAX LENGTH</div>
+          <div class="dial-wrap" id="lengthDialWrap"></div>
+          <div class="dial-readout" id="lengthValue">3+ hour marathons</div>
+          <input type="range" id="lengthSlider" min="0" max="10" step="1" value="10" class="hidden-range" />
+        </div>
+
+        <div class="panel panel-orange">
+          <div class="panel-label">📼 ERA</div>
+          <div class="toggle-group sticker-group" id="decadeGroup"></div>
+        </div>
+      </div>
+
+      <div class="center-col">
+        <div class="stage" id="stage">
+          <div class="stage-lights stage-lights-top"></div>
+          <div class="stage-lights stage-lights-bottom"></div>
+          <div class="stage-lights stage-lights-left"></div>
+          <div class="stage-lights stage-lights-right"></div>
+
+          <div class="stage-valance">
+            <span>★ CINEMA ★</span>
+          </div>
+
+          <div class="stage-screen">
+            <div class="stage-idle" id="stageIdle">
+              <div class="idle-emoji">❓</div>
+              <div class="idle-label">NOW SHOWING:</div>
+              <div class="idle-value">???</div>
+            </div>
+
+            <section class="slot-machine" id="slotMachine" hidden>
+              <div class="reel-window">
+                <img id="reelPoster" class="reel-poster" alt="" />
+              </div>
+            </section>
+
+            <section class="result" id="result" hidden>
+              <div class="result-top">
+                <img id="resultPoster" class="result-poster" alt="" />
+                <div class="result-details">
+                  <h2 id="resultTitle"></h2>
+                  <p id="resultMeta"></p>
+                  <p id="resultOverview" class="result-overview"></p>
+                  <div class="watch-row">
+                    <span class="watch-label">WATCH:</span>
+                    <div id="resultProviders" class="provider-icons"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="trailer-wrap" id="trailerWrap" hidden>
+                <iframe
+                  id="trailerFrame"
+                  src=""
+                  title="Trailer"
+                  frameborder="0"
+                  allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              </div>
+            </section>
+          </div>
+
+          <div class="curtain curtain-left" id="curtainLeft"></div>
+          <div class="curtain curtain-right" id="curtainRight"></div>
+        </div>
+
+        <div class="fx-layer" id="fxLayer"></div>
+      </div>
+
+      <div class="side-col right-col">
+        <div class="panel panel-lime dial-panel">
+          <div class="panel-label">🍅 MIN SCORE</div>
+          <div class="dial-wrap" id="rtDialWrap"></div>
+          <div class="dial-readout" id="rtValue">Any score</div>
+          <input type="range" id="rtSlider" min="0" max="100" step="10" value="0" class="hidden-range" />
+        </div>
+
+        <div class="panel panel-pink">
+          <div class="panel-label">📺 STREAMING</div>
+          <div class="toggle-group sticker-group" id="streamingGroup"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel-yellow genre-panel">
+      <div class="toggle-group sticker-group genre-row" id="genreGroup"></div>
+    </div>
+
+    <button id="spinButton" class="spin-btn">🎰 SPIN IT!</button>
+
+    <p id="statusMessage" class="status"></p>
+  </div>
+
+  <script src="/movies/config.js"></script>
+  <script src="/movies/movies.js"></script>
+  <script src="/movies/app.js"></script>
+</body>
+</html>
