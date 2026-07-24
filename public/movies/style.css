@@ -100,7 +100,7 @@ body {
   flex-wrap: wrap;
   gap: 12px;
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .side-col {
@@ -404,6 +404,9 @@ body {
 .stage {
   position: relative;
   width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   border: 6px solid #000;
   border-radius: 14px;
   overflow: hidden;
@@ -485,6 +488,7 @@ body {
      scrollbar. The valance/lights/curtains stay absolutely positioned
      overlays and just cover whatever height this ends up being. */
   position: relative;
+  flex: 1;
   margin: 46px 12px 12px 12px;
   border-radius: 8px;
   background: radial-gradient(circle at 50% 40%, #241236, #06010e);
