@@ -743,10 +743,10 @@ body {
       "title  title"
       "stage  stage"
       "spin   spin"
+      "status status"
       "length score"
       "era    stream"
-      "genre  genre"
-      "status status";
+      "genre  genre";
     gap: 12px;
   }
 
