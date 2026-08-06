@@ -76,6 +76,9 @@
             </section>
 
             <section class="result" id="result" hidden>
+              <p class="shared-banner" id="sharedBanner" hidden>
+                🍿 A friend sent you this one
+              </p>
               <div class="result-top">
                 <img id="resultPoster" class="result-poster" alt="" />
                 <div class="result-details">
@@ -127,7 +130,23 @@
       <div class="toggle-group sticker-group genre-row" id="genreGroup"></div>
     </div>
 
-    <button id="spinButton" class="spin-btn">🎰 SPIN IT!</button>
+    <!-- Share sits beside Spin at the same weight once there's a pick to send —
+         it's the main thing this page wants people to do after landing on one. -->
+    <div class="action-row" id="actionRow">
+      <button id="spinButton" class="action-btn spin-btn">🎰 SPIN IT!</button>
+      <button id="shareButton" class="action-btn share-btn" type="button" hidden>
+        <span class="share-btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+               stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 16V3" />
+            <path d="M7 8l5-5 5 5" />
+            <path d="M4 14v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6" />
+          </svg>
+        </span>
+        <span id="shareButtonLabel">SHARE</span>
+      </button>
+    </div>
 
     <p id="statusMessage" class="status"></p>
   </div>

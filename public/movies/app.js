@@ -54,12 +54,20 @@ const BUNDLE_URL = "/movies/movies.json";
 // held roughly 700 KB, worth reclaiming from anyone who still has it.
 const LEGACY_CACHE_KEY = "movieNightCache_v3";
 
+// Shared links point at /movies/pick/<tmdbId> rather than straight here, so the
+// text-message preview can carry the movie's own image and title — those tags
+// have to exist in the served HTML, and link crawlers don't run JavaScript.
+// That page bounces the visitor to /movies?pick=<tmdbId>, handled by revealPick().
+const SHARE_BASE = "https://www.tedherringshaw.com/movies/pick";
+const SHARE_MESSAGE = "It's movie night, baby!";
+
 const PALETTE = ["#ff2bd0", "#38f0ff", "#b6ff3b", "#ff8a3b", "#ffe600", "#a24bff", "#ff5b8a", "#3bd0ff"];
 
 // ---------- State ----------
 
 let movieDatabase = []; // unpacked from movies.json on load
 let lastWinnerKey = null; // prevents back-to-back repeats
+let currentWinner = null; // what the share button is currently pointing at
 const selectedDecades = new Set();
 const selectedGenres = new Set();
 const selectedStreaming = new Set();
@@ -449,6 +457,88 @@ function fillResult(winner, extras) {
   }
 }
 
+// ---------- Sharing ----------
+
+// Called once a movie is on screen, however it got there — a spin or a friend's
+// link. Share only exists from that point on, since there's nothing to send
+// before it, and Spin stops being an invitation and becomes a re-roll.
+function showPickActions() {
+  document.getElementById("shareButton").hidden = false;
+  document.getElementById("spinButton").textContent = "🎰 SPIN AGAIN";
+  // Once a movie is on screen it speaks for itself — clear the load message so
+  // nothing sits under the buttons competing with it. (Spin already clears this
+  // on its way through; this covers arriving straight from a shared link.)
+  document.getElementById("statusMessage").textContent = "";
+}
+
+// Hands off to the OS share sheet where there is one — that's the whole point
+// on a phone, since it puts Messages one tap away. Desktop browsers mostly
+// don't implement navigator.share, so those fall back to copying the link,
+// following the same copy-then-revert pattern as the site's contact buttons.
+async function shareCurrentPick() {
+  if (!currentWinner) return;
+
+  const btn = document.getElementById("shareButton");
+  const label = document.getElementById("shareButtonLabel");
+  const url = `${SHARE_BASE}/${currentWinner.id}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "Movie Night, Baby!", text: SHARE_MESSAGE, url });
+      ding("🎟️ SENT!", "#b6ff3b");
+    } catch (err) {
+      // Dismissing the share sheet rejects with AbortError. That's a choice,
+      // not a failure, so it should leave no trace on the page.
+      if (err.name !== "AbortError") console.warn("Share failed:", err);
+    }
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(`${SHARE_MESSAGE} ${url}`);
+    btn.classList.add("copied");
+    label.textContent = "COPIED!";
+    ding("🎟️ COPIED!", "#b6ff3b");
+    setTimeout(() => {
+      btn.classList.remove("copied");
+      label.textContent = "SHARE";
+    }, 2000);
+  } catch (err) {
+    console.warn("Couldn't copy the link:", err);
+    label.textContent = "COPY FAILED";
+    setTimeout(() => { label.textContent = "SHARE"; }, 2000);
+  }
+}
+
+// ---------- Arriving from a shared link ----------
+
+// Someone tapped a friend's link. Show them that movie straight away rather
+// than pantomiming a spin that already happened — then leave the Spin button
+// as the obvious next move, which is the whole reason for sharing a link back
+// to the site instead of to a trailer.
+async function revealPick(tmdbId) {
+  const movie = movieDatabase.find((m) => m.id === tmdbId);
+  if (!movie) return false;
+
+  const stage = document.getElementById("stage");
+  const resultSection = document.getElementById("result");
+
+  document.getElementById("stageIdle").hidden = true;
+  currentWinner = movie;
+  lastWinnerKey = movieKey(movie);
+
+  fillResult(movie, await fetchWinnerExtras(movie.id));
+  document.getElementById("sharedBanner").hidden = false;
+
+  resultSection.hidden = false;
+  resultSection.classList.add("reveal");
+  stage.classList.add("open");
+  showPickActions();
+  burstPopcorn();
+  ding("🍿 ENJOY!", "#ffe600");
+  return true;
+}
+
 async function spin() {
   const statusEl = document.getElementById("statusMessage");
   const spinBtn = document.getElementById("spinButton");
@@ -470,6 +560,8 @@ async function spin() {
   stage.classList.remove("open");
   stageIdle.hidden = true;
   resultSection.hidden = true;
+  // Once they spin for themselves, it's their pick, not the one they were sent.
+  document.getElementById("sharedBanner").hidden = true;
   document.getElementById("trailerFrame").src = ""; // stop any trailer still playing from the previous winner
   slotMachine.hidden = false;
   slotMachine.classList.add("spinning");
@@ -483,6 +575,7 @@ async function spin() {
   const pool = repeatFiltered.length > 0 ? repeatFiltered : matches;
   const winner = pool[Math.floor(Math.random() * pool.length)];
   lastWinnerKey = movieKey(winner);
+  currentWinner = winner;
 
   // Fire the winner's blurb/trailer lookup now and await it after the reels
   // finish — a ~100-300ms call under ~2.5s of animation, so it's never seen.
@@ -510,6 +603,7 @@ async function spin() {
   void resultSection.offsetWidth; // force reflow so the reveal animation restarts
   resultSection.classList.add("reveal");
   stage.classList.add("open");
+  showPickActions();
 
   burstPopcorn();
   ding("🎉 TA-DAAA!", "#b6ff3b");
@@ -590,6 +684,15 @@ async function init() {
   statusEl.textContent = `Ready — ${movieDatabase.length} movies loaded.`;
   spinBtn.disabled = false;
   spinBtn.addEventListener("click", spin);
+  document.getElementById("shareButton").addEventListener("click", shareCurrentPick);
+
+  // ?pick=<tmdbId> means they followed someone's shared link. An id we don't
+  // recognise (retired from the catalog, hand-edited URL) just falls through to
+  // the normal idle state — a stranger's first visit shouldn't show an error.
+  const requestedPick = Number(new URLSearchParams(location.search).get("pick"));
+  if (Number.isInteger(requestedPick) && requestedPick > 0) {
+    await revealPick(requestedPick);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

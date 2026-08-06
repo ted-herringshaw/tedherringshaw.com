@@ -1,0 +1,116 @@
+---
+// One tiny page per movie, prerendered at build time, existing for a single
+// reason: to give a shared pick a proper link-preview card in Messages.
+//
+// It can't be done from app.js — the crawlers that build those cards don't run
+// JavaScript, so the og: tags have to be in the HTML as served. Hence a real
+// route rather than a query parameter on /movies.
+//
+// The page itself is a doorway: it hands the visitor straight to the picker
+// with ?pick=<id>, which reveals that movie. Crawlers read the tags and stop.
+import movieData from "../../../../public/movies/movies.json";
+// Kept out of the browser bundle on purpose — see scripts/build-movie-data.mjs.
+import backdrops from "../../../data/movie-backdrops.json";
+
+export function getStaticPaths() {
+  const idx = Object.fromEntries(movieData.fields.map((name, i) => [name, i]));
+
+  return movieData.movies.map((row) => ({
+    params: { id: String(row[idx.id]) },
+    props: {
+      title: row[idx.title],
+      year: row[idx.year],
+      rtScore: row[idx.rtScore],
+      runtime: row[idx.runtime],
+      posterPath: row[idx.posterPath],
+      backdropPath: backdrops[String(row[idx.id])] ?? null,
+      genres: movieData.genres.filter((_, i) => row[idx.genreMask] & (1 << i)),
+    },
+  }));
+}
+
+const { id } = Astro.params;
+const { title, year, rtScore, runtime, backdropPath, posterPath, genres } = Astro.props;
+
+const SITE = "https://www.tedherringshaw.com";
+const target = `${SITE}/movies?pick=${id}`;
+
+function formatLength(minutes) {
+  if (!minutes) return null;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m} min`;
+}
+
+// Backdrop first — it's already 16:9, which is the shape preview cards want.
+// Falling back to the poster means an awkward centre-crop, but a cropped image
+// still beats no image; the site banner is the last resort.
+const previewImage = backdropPath
+  ? `https://image.tmdb.org/t/p/w780${backdropPath}`
+  : posterPath
+    ? `https://image.tmdb.org/t/p/w780${posterPath}`
+    : `${SITE}/movies/og-image.png`;
+
+const length = formatLength(runtime);
+const cardTitle = [`${title} (${year})`, `🍅 ${rtScore}%`, length].filter(Boolean).join(" · ");
+const cardDescription = [genres.join(", "), "Spin your own at Movie Night, Baby!"]
+  .filter(Boolean)
+  .join(" — ");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{cardTitle} — Movie Night, Baby!</title>
+    <meta name="description" content={cardDescription} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Movie Night, Baby!" />
+    <meta property="og:title" content={cardTitle} />
+    <meta property="og:description" content={cardDescription} />
+    <meta property="og:image" content={previewImage} />
+    <meta property="og:url" content={target} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={cardTitle} />
+    <meta name="twitter:description" content={cardDescription} />
+    <meta name="twitter:image" content={previewImage} />
+
+    <link rel="icon" href="/movies/apple-touch-icon.png" />
+    <link rel="canonical" href={target} />
+
+    <!-- Crawlers read the tags above and stop here; people get bounced onward.
+         Both a meta refresh and a script, so it still works with JS disabled. -->
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <script is:inline define:vars={{ target }}>
+      location.replace(target);
+    </script>
+
+    <style>
+      /* Styled so the hand-off reads as part of the show rather than a blank
+         flash. Most people never see it for more than a frame. */
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #12001f;
+        color: #ffe600;
+        font-family: "Comic Sans MS", cursive, sans-serif;
+        text-align: center;
+        padding: 24px;
+      }
+      p { font-size: 18px; }
+      a { color: #38f0ff; }
+    </style>
+  </head>
+  <body>
+    <p>
+      🍿 Opening <strong>{title}</strong>…
+      <br />
+      <a href={target}>Tap here if nothing happens.</a>
+    </p>
+  </body>
+</html>

@@ -18,7 +18,7 @@
 // when streaming availability has drifted (the weekly GitHub Action in
 // .github/workflows/refresh-movies.yml does the latter automatically).
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -26,6 +26,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const MOVIES_DIR = join(ROOT, "public", "movies");
 const SOURCE_FILE = join(MOVIES_DIR, "movies.js");
 const OUTPUT_FILE = join(MOVIES_DIR, "movies.json");
+const BACKDROPS_FILE = join(ROOT, "src", "data", "movie-backdrops.json");
 
 const REGION = "US";
 const CONCURRENCY = 8;
@@ -132,14 +133,21 @@ async function mapWithConcurrency(items, limit, fn) {
 // Returns { status: "ok", movie } | { status: "notFound" } | { status: "error", message }
 async function enrichMovie(movie, genreIndexById, serviceIndexByProviderName) {
   try {
-    const search = await tmdb("/search/movie", {
-      query: movie.title,
-      year: String(movie.year),
-    });
-    const found = search.results?.[0];
-    if (!found) return { status: "notFound" };
+    // TMDB's search ranks by popularity, not exactness, so a common title can
+    // land on the wrong film — searching "The Ring" (2002) returns Fellowship
+    // of the Ring first. Pin those cases with an explicit tmdbId in movies.js.
+    let id = movie.tmdbId;
+    if (!id) {
+      const search = await tmdb("/search/movie", {
+        query: movie.title,
+        year: String(movie.year),
+      });
+      const found = search.results?.[0];
+      if (!found) return { status: "notFound" };
+      id = found.id;
+    }
 
-    const details = await tmdb(`/movie/${found.id}`, {
+    const details = await tmdb(`/movie/${id}`, {
       append_to_response: "watch/providers",
     });
 
@@ -159,13 +167,17 @@ async function enrichMovie(movie, genreIndexById, serviceIndexByProviderName) {
     return {
       status: "ok",
       movie: {
-        id: found.id,
+        id,
         title: movie.title,
         year: movie.year,
         rtScore: movie.rtScore,
         runtime: details.runtime || null,
         genreMask,
         posterPath: details.poster_path || null,
+        // Landscape still, used as the link-preview image when a pick is
+        // shared. The poster can't do this job: preview cards are wide, so a
+        // tall poster gets centre-cropped and the title art is sliced in half.
+        backdropPath: details.backdrop_path || null,
         providerMask,
       },
     };
@@ -227,6 +239,24 @@ async function main() {
     for (const r of errored) console.log(`  - ${r.movie.title} (${r.movie.year}): ${r.result.message}`);
   }
 
+  // Two rows resolving to the same TMDB id means either the same film is in
+  // movies.js twice (it gets double the odds of being picked, and both rows
+  // collapse to one share page) or a title matched the wrong film entirely.
+  // Worth surfacing loudly — it's how the "The Ring" → Fellowship mismatch
+  // was caught — but not worth failing a run over.
+  const byTmdbId = new Map();
+  for (const { movie, result } of ok) {
+    const id = result.movie.id;
+    if (!byTmdbId.has(id)) byTmdbId.set(id, []);
+    byTmdbId.get(id).push(`${movie.title} (${movie.year})`);
+  }
+  const collisions = [...byTmdbId].filter(([, rows]) => rows.length > 1);
+  if (collisions.length > 0) {
+    console.log(`\n${collisions.length} TMDB id collision(s) — duplicate entry, or a wrong match:`);
+    for (const [id, rows] of collisions) console.log(`  id ${id}: ${rows.join("  ==  ")}`);
+    console.log("  Fix by removing the duplicate, or pin the right film with tmdbId in movies.js.");
+  }
+
   const hitRate = ok.length / curated.length;
   if (hitRate < MIN_HIT_RATE) {
     throw new Error(
@@ -238,6 +268,9 @@ async function main() {
   // Field order is emitted alongside the rows so app.js unpacks by looking up
   // names rather than trusting hardcoded indexes — adding a field here can't
   // silently shift the client's reads.
+  // Deliberately excludes backdropPath: only the share-page build reads it, and
+  // carrying ~995 more paths here would add ~20 KB brotli to every visitor's
+  // first load for data the browser never touches. It goes to BACKDROPS_FILE.
   const fields = ["id", "title", "year", "rtScore", "runtime", "genreMask", "posterPath", "providerMask"];
   const bundle = {
     version: 1,
@@ -251,10 +284,26 @@ async function main() {
 
   writeFileSync(OUTPUT_FILE, `${JSON.stringify(bundle)}\n`);
 
+  // Build-only companion, keyed by TMDB id. Lives under src/ rather than
+  // public/ precisely so it is never served to a browser — the share pages
+  // read it at build time to pick a link-preview image.
+  const backdrops = Object.fromEntries(
+    ok
+      .filter(({ result }) => result.movie.backdropPath)
+      .map(({ result }) => [result.movie.id, result.movie.backdropPath])
+  );
+  mkdirSync(dirname(BACKDROPS_FILE), { recursive: true });
+  writeFileSync(BACKDROPS_FILE, `${JSON.stringify(backdrops, null, 0)}\n`);
+
   const bytes = Buffer.byteLength(JSON.stringify(bundle));
+  const withoutBackdrop = ok.length - Object.keys(backdrops).length;
   console.log(
     `\nWrote public/movies/movies.json — ${ok.length} movies, ` +
       `${(bytes / 1024).toFixed(0)} KB raw, in ${elapsedSec}s`
+  );
+  console.log(
+    `Wrote src/data/movie-backdrops.json — ${Object.keys(backdrops).length} preview images` +
+      (withoutBackdrop > 0 ? ` (${withoutBackdrop} will fall back to the poster)` : "")
   );
 }
 

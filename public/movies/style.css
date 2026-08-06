@@ -368,35 +368,91 @@ body {
   transform: scale(1.05) !important;
 }
 
-/* ---------- Spin button ---------- */
+/* ---------- Action buttons: Spin + Share ----------
 
-.spin-btn {
-  display: block;
-  margin: 2px auto 0;
+   Share is deliberately the same size and weight as Spin rather than a small
+   secondary control — passing a pick to a friend is the thing this page most
+   wants to happen next, so it gets equal billing. The two share a silhouette
+   so the row reads as one unit, and are told apart by colour. */
+
+.action-row {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: clamp(8px, 1.6vw, 14px);
+  margin-top: 2px;
+}
+
+.action-btn {
+  flex: 1 1 0;
+  max-width: 300px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   cursor: pointer;
   font-family: "Bungee", cursive;
-  font-size: clamp(20px, 4vw, 34px);
-  color: #fff;
-  letter-spacing: 1px;
-  padding: clamp(12px, 1.8vh, 18px) clamp(30px, 5vw, 54px);
+  font-size: clamp(15px, 2.7vw, 27px);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  padding: clamp(12px, 1.8vh, 18px) clamp(10px, 2vw, 22px);
   border: 5px solid #000;
   border-radius: 60px;
-  background: linear-gradient(#ff2b6d, #c01050);
-  box-shadow: 8px 8px 0 #000, inset 0 -6px 0 rgba(0, 0, 0, 0.35);
   text-shadow: 3px 3px 0 #000;
   transition: transform 0.08s;
 }
-.spin-btn:not(:disabled):hover {
+.action-btn[hidden] {
+  display: none;
+}
+
+.action-btn:not(:disabled):hover {
   transform: translateY(-3px) rotate(1deg) scale(1.03);
   box-shadow: 10px 12px 0 #000, inset 0 -6px 0 rgba(0, 0, 0, 0.35);
 }
-.spin-btn:not(:disabled):active {
+.action-btn:not(:disabled):active {
   transform: translateY(4px);
   box-shadow: 3px 3px 0 #000, inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+}
+.action-btn:focus-visible {
+  outline: 4px solid var(--cyan);
+  outline-offset: 4px;
+}
+
+.spin-btn {
+  color: #fff;
+  background: linear-gradient(#ff2b6d, #c01050);
+  box-shadow: 8px 8px 0 #000, inset 0 -6px 0 rgba(0, 0, 0, 0.35);
 }
 .spin-btn:disabled {
   background: linear-gradient(#8a8a9a, #5a5a6a);
   cursor: not-allowed;
+}
+
+.share-btn {
+  color: #4a2000;
+  background: linear-gradient(var(--yellow), var(--orange));
+  box-shadow: 8px 8px 0 #000, inset 0 -6px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+}
+.share-btn-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+/* Confirmation state for the desktop copy-to-clipboard path. */
+.share-btn.copied {
+  background: linear-gradient(var(--lime), #7fd400);
+  color: var(--lime-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-btn,
+  .action-btn:not(:disabled):hover,
+  .action-btn:not(:disabled):active {
+    transition: none;
+    transform: none;
+  }
 }
 
 /* ---------- Stage / theater ---------- */
@@ -659,6 +715,26 @@ body {
   font-weight: 700;
 }
 
+/* ---------- "A friend sent you this" banner ---------- */
+
+.shared-banner {
+  margin: 0 0 7px;
+  padding: 6px 12px;
+  font-family: "Bungee", cursive;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-align: center;
+  color: #2b0a75;
+  background: var(--cyan);
+  border: 3px solid #000;
+  border-radius: 20px;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-0.8deg);
+}
+.shared-banner[hidden] {
+  display: none;
+}
+
 .trailer-wrap {
   position: relative;
   width: 100%;
@@ -762,7 +838,7 @@ body {
   .panel-orange { grid-area: era; }
   .panel-pink { grid-area: stream; }
   .genre-panel { grid-area: genre; }
-  #spinButton { grid-area: spin; }
+  .action-row { grid-area: spin; }
   #statusMessage { grid-area: status; }
 
   /* Drop the poster so the title card reads full-width — the overview
