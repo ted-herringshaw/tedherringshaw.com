@@ -16,25 +16,16 @@ const GENRES = [
   "Science Fiction", "Thriller",
 ];
 
-// key = internal id, label = shown as a tooltip, match = the provider_name
-// value(s) TMDB actually uses for this service (confirmed via TMDB's API —
-// some differ from the marketing name, e.g. Apple TV+ shows as "Apple TV").
-// logoPath is filled in at runtime by fetchProviderLogos().
-const STREAMING_SERVICES = [
-  { key: "netflix", label: "Netflix", match: ["Netflix"], logoPath: null },
-  { key: "hulu", label: "Hulu", match: ["Hulu"], logoPath: null },
-  { key: "max", label: "Max", match: ["Max", "HBO Max"], logoPath: null },
-  { key: "disney", label: "Disney+", match: ["Disney Plus"], logoPath: null },
-  { key: "prime", label: "Prime Video", match: ["Amazon Prime Video"], logoPath: null },
-  { key: "appletv", label: "Apple TV+", match: ["Apple TV", "Apple TV Plus"], logoPath: null },
-  { key: "peacock", label: "Peacock", match: ["Peacock Premium", "Peacock"], logoPath: null },
-  {
-    key: "paramount",
-    label: "Paramount+",
-    match: ["Paramount Plus Premium", "Paramount Plus Essential", "Paramount Plus"],
-    logoPath: null,
-  },
-];
+// The streaming services, their labels, and their logo paths all come from
+// movies.json (see scripts/build-movie-data.mjs, which owns the list and the
+// TMDB provider-name matching). Filled in by loadMovieData(); the bit order
+// here matches each movie's providerMask.
+let STREAMING_SERVICES = [];
+
+// TMDB's full genre vocabulary, also from movies.json. Index = bit position in
+// each movie's genreMask. Wider than GENRES above on purpose: the result card
+// prints every genre a movie has, including ones the filter row doesn't offer.
+let GENRE_VOCABULARY = [];
 
 // Discrete length steps: the two ends are open-ended buckets rather than
 // literal minutes, the middle moves in clean 10-minute increments.
@@ -52,18 +43,32 @@ const LENGTH_STEPS = [
   { label: "3+ hour marathons", max: Infinity },
 ];
 
-const CACHE_KEY = "movieNightCache_v3";
-const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+// Everything needed to filter and display the catalog, pre-resolved against
+// TMDB at build time by scripts/build-movie-data.mjs. Cache-busted by the
+// deploy itself, since Vercel fingerprints nothing in public/ — the query
+// string is bumped by hand only if a schema change ever needs to force it.
+const BUNDLE_URL = "/movies/movies.json";
+
+// The page used to enrich all ~1000 movies in the browser on first load and
+// stash the result here. That's now precomputed, so this key is dead — and it
+// held roughly 700 KB, worth reclaiming from anyone who still has it.
+const LEGACY_CACHE_KEY = "movieNightCache_v3";
 
 const PALETTE = ["#ff2bd0", "#38f0ff", "#b6ff3b", "#ff8a3b", "#ffe600", "#a24bff", "#ff5b8a", "#3bd0ff"];
 
 // ---------- State ----------
 
-let movieDatabase = []; // enriched movies, filled in on load
+let movieDatabase = []; // unpacked from movies.json on load
 let lastWinnerKey = null; // prevents back-to-back repeats
 const selectedDecades = new Set();
 const selectedGenres = new Set();
 const selectedStreaming = new Set();
+
+// Overview + trailer aren't in the bundle (they'd quadruple it, and trailer
+// keys go stale as YouTube pulls videos), so they're fetched for the single
+// winning movie during the spin animation. Memoized per session by TMDB id so
+// landing on the same movie twice doesn't refetch.
+const winnerExtrasCache = new Map();
 
 // ---------- Small helpers ----------
 
@@ -86,7 +91,7 @@ function decadeForYear(year) {
 // A movie whose year matches no DECADES bucket is silently excluded from
 // every era filter (decadeForYear returns null, which never equals a
 // selected key) — warn once at load time so a bad/missing year in
-// CURATED_MOVIES doesn't just quietly vanish from filtered results.
+// movies.js doesn't just quietly vanish from filtered results.
 function warnAboutUnrecognizedYears(movies) {
   movies
     .filter((m) => decadeForYear(m.year) === null)
@@ -103,21 +108,15 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Runs `fn` over `items` with at most `limit` calls in flight at once,
-// so we don't blast TMDB with 100+ simultaneous requests.
-async function mapWithConcurrency(items, limit, fn) {
-  const results = new Array(items.length);
-  let nextIndex = 0;
-
-  async function worker() {
-    while (nextIndex < items.length) {
-      const i = nextIndex++;
-      results[i] = await fn(items[i], i);
-    }
+// Expands a bitmask into the values it selects from `vocabulary`, where bit i
+// means vocabulary[i]. Both genres and streaming services ride in the bundle
+// this way — it's what keeps 995 movies under 40 KB over the wire.
+function unpackMask(mask, vocabulary) {
+  const out = [];
+  for (let i = 0; i < vocabulary.length; i++) {
+    if (mask & (1 << i)) out.push(vocabulary[i]);
   }
-
-  await Promise.all(Array.from({ length: limit }, worker));
-  return results;
+  return out;
 }
 
 // ---------- Building the filter controls ----------
@@ -292,22 +291,6 @@ function burstPopcorn() {
   }
 }
 
-async function fetchProviderLogos() {
-  try {
-    const url =
-      `https://api.themoviedb.org/3/watch/providers/movie?api_key=${TMDB_API_KEY}` +
-      `&watch_region=${TMDB_REGION}`;
-    const data = await fetchJson(url);
-    const allProviders = data.results || [];
-    STREAMING_SERVICES.forEach((service) => {
-      const found = allProviders.find((p) => service.match.includes(p.provider_name));
-      service.logoPath = found ? found.logo_path : null;
-    });
-  } catch (err) {
-    console.warn("Failed to load streaming provider logos:", err);
-  }
-}
-
 // ---------- Talking to TMDB ----------
 
 async function fetchJson(url) {
@@ -329,118 +312,63 @@ function findTrailerKey(videos) {
   return teaser ? teaser.key : null;
 }
 
-async function enrichMovie(movie) {
+// The one TMDB call still made from the browser, for the winning movie only.
+// It's kicked off the moment a winner is picked and awaited just before the
+// curtains open, so it hides entirely inside the ~2.5s slot-machine animation.
+// Returns null on any failure; fillResult() degrades to the bundled fields.
+async function fetchWinnerExtras(tmdbId) {
+  if (winnerExtrasCache.has(tmdbId)) return winnerExtrasCache.get(tmdbId);
   try {
-    const searchUrl =
-      `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}` +
-      `&query=${encodeURIComponent(movie.title)}&year=${movie.year}`;
-    const searchData = await fetchJson(searchUrl);
-    const found = searchData.results && searchData.results[0];
-    if (!found) {
-      console.warn(`No TMDB match for "${movie.title}" (${movie.year})`);
-      return null;
-    }
-
-    const detailsUrl =
-      `https://api.themoviedb.org/3/movie/${found.id}?api_key=${TMDB_API_KEY}` +
-      `&append_to_response=watch/providers,videos`;
-    const details = await fetchJson(detailsUrl);
-
-    const flatrate =
-      (details["watch/providers"] &&
-        details["watch/providers"].results &&
-        details["watch/providers"].results[TMDB_REGION] &&
-        details["watch/providers"].results[TMDB_REGION].flatrate) ||
-      [];
-
-    return {
-      title: movie.title,
-      year: movie.year,
-      rtScore: movie.rtScore,
-      runtime: details.runtime || null,
-      genres: (details.genres || []).map((g) => g.name),
-      posterPath: details.poster_path,
+    const details = await fetchJson(
+      `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_API_KEY}` +
+        `&append_to_response=videos`
+    );
+    const extras = {
       overview: details.overview || "",
       trailerKey: findTrailerKey(details.videos && details.videos.results),
-      providers: flatrate.map((p) => ({
-        name: p.provider_name,
-        logoPath: p.logo_path,
-      })),
     };
+    winnerExtrasCache.set(tmdbId, extras);
+    return extras;
   } catch (err) {
-    console.warn(`Failed to enrich "${movie.title}":`, err);
+    console.warn(`Couldn't load details for TMDB id ${tmdbId}:`, err);
     return null;
   }
 }
 
-// Shape enrichMovie() guarantees for every non-null result — used to reject
-// a cached record that doesn't match (stale schema, hand-edited localStorage).
-function isValidCachedMovie(m) {
-  return (
-    m &&
-    typeof m.title === "string" &&
-    typeof m.year === "number" &&
-    Array.isArray(m.genres) &&
-    Array.isArray(m.providers)
-  );
-}
+// Loads the prebuilt bundle and expands each packed row into the object shape
+// the rest of the app works with. Rows are arrays ordered by bundle.fields
+// rather than keyed objects — that packing plus the genre/provider bitmasks is
+// what gets ~1000 movies down to ~39 KB brotli, one request, instead of the
+// ~2000 TMDB round-trips this used to cost every first-time visitor.
+async function loadMovieData() {
+  const bundle = await fetchJson(BUNDLE_URL);
 
-// Cache is keyed per-movie rather than validated as an all-or-nothing blob:
-// any curated title missing from (or invalid within) the cache — whether
-// because it's new, because a prior enrichment failed transiently, or
-// because it will never have a TMDB match — is simply re-fetched here. That
-// makes a partial failure self-healing on the very next load instead of
-// getting silently frozen into the cache for CACHE_MAX_AGE_MS.
-async function loadMovieData(statusEl) {
-  const cached = (readCache() || []).filter(isValidCachedMovie);
-  const cachedByKey = new Map(cached.map((m) => [movieKey(m), m]));
-  const missing = CURATED_MOVIES.filter((m) => !cachedByKey.has(movieKey(m)));
+  GENRE_VOCABULARY = bundle.genres;
+  STREAMING_SERVICES = bundle.services;
 
-  if (missing.length === 0) {
-    movieDatabase = CURATED_MOVIES.map((m) => cachedByKey.get(movieKey(m))).filter(Boolean);
-    return;
-  }
-
-  statusEl.textContent = `Loading movie data... (0/${missing.length})`;
-  let done = 0;
-
-  const enriched = await mapWithConcurrency(missing, 5, async (movie) => {
-    const result = await enrichMovie(movie);
-    done++;
-    statusEl.textContent = `Loading movie data... (${done}/${missing.length})`;
-    return result;
+  const idx = {};
+  bundle.fields.forEach((name, i) => {
+    idx[name] = i;
   });
-  const enrichedByKey = new Map(enriched.filter(Boolean).map((m) => [movieKey(m), m]));
 
-  movieDatabase = CURATED_MOVIES.map(
-    (m) => cachedByKey.get(movieKey(m)) || enrichedByKey.get(movieKey(m))
-  ).filter(Boolean);
-  writeCache(movieDatabase);
-}
+  movieDatabase = bundle.movies.map((row) => ({
+    id: row[idx.id],
+    title: row[idx.title],
+    year: row[idx.year],
+    rtScore: row[idx.rtScore],
+    runtime: row[idx.runtime],
+    posterPath: row[idx.posterPath],
+    genres: unpackMask(row[idx.genreMask], GENRE_VOCABULARY),
+    // Service objects, not names — matchesFilters() and renderProviderIcons()
+    // both key off `.key`, so TMDB's provider-name aliasing is resolved once
+    // at build time and never has to be re-matched here.
+    services: unpackMask(row[idx.providerMask], STREAMING_SERVICES),
+  }));
 
-function readCache() {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const { timestamp, data } = JSON.parse(raw);
-    if (!Number.isFinite(timestamp) || Date.now() - timestamp > CACHE_MAX_AGE_MS) return null;
-    return Array.isArray(data) ? data : null;
+    localStorage.removeItem(LEGACY_CACHE_KEY);
   } catch {
-    return null;
-  }
-}
-
-function writeCache(data) {
-  try {
-    localStorage.setItem(
-      CACHE_KEY,
-      JSON.stringify({
-        timestamp: Date.now(),
-        data,
-      })
-    );
-  } catch {
-    // localStorage might be full or unavailable — not critical, just skip caching.
+    // Private mode or a full quota — nothing here is load-bearing.
   }
 }
 
@@ -465,13 +393,7 @@ function matchesFilters(movie) {
   if (minScore > 0 && !(typeof movie.rtScore === "number" && movie.rtScore >= minScore)) return false;
 
   if (selectedStreaming.size > 0) {
-    const checkedServices = STREAMING_SERVICES.filter((s) =>
-      selectedStreaming.has(s.key)
-    );
-    const movieProviderNames = movie.providers.map((p) => p.name);
-    const available = checkedServices.some((s) =>
-      s.match.some((name) => movieProviderNames.includes(name))
-    );
+    const available = movie.services.some((s) => selectedStreaming.has(s.key));
     if (!available) return false;
   }
 
@@ -480,44 +402,46 @@ function matchesFilters(movie) {
 
 // ---------- Slot machine animation + result ----------
 
-// Only badge providers the streaming selector actually knows about — TMDB's
-// flatrate list includes services (regional add-ons, ad-tier variants, etc.)
-// that aren't one of our selectable STREAMING_SERVICES.
+// movie.services only ever contains the eight selectable services — the build
+// step already dropped everything else TMDB lists as flatrate (regional
+// add-ons, ad-tier variants), so there's nothing left to filter out here.
 function renderProviderIcons(container, movie) {
   container.innerHTML = "";
-  const trackedProviders = movie.providers.filter(
-    (p) => p.logoPath && STREAMING_SERVICES.some((s) => s.match.includes(p.name))
-  );
-  if (trackedProviders.length === 0) {
+  const services = movie.services.filter((s) => s.logoPath);
+  if (services.length === 0) {
     const span = document.createElement("span");
     span.className = "no-providers";
     span.textContent = "Not currently on a major streaming subscription.";
     container.appendChild(span);
     return;
   }
-  trackedProviders.forEach((p) => {
+  services.forEach((s) => {
     const img = document.createElement("img");
-    img.src = `https://image.tmdb.org/t/p/w45${p.logoPath}`;
-    img.alt = p.name;
-    img.title = p.name;
+    img.src = `https://image.tmdb.org/t/p/w45${s.logoPath}`;
+    img.alt = s.label;
+    img.title = s.label;
     container.appendChild(img);
   });
 }
 
-function fillResult(winner) {
+// `extras` is the result of fetchWinnerExtras(), or null if that call failed —
+// in which case everything except the blurb and trailer still renders from the
+// bundled data, and the trailer panel just stays hidden.
+function fillResult(winner, extras) {
   document.getElementById("resultPoster").src = posterUrl(winner.posterPath);
   document.getElementById("resultTitle").textContent = `${winner.title} (${winner.year})`;
   document.getElementById("resultMeta").textContent =
     `${winner.genres.join(", ") || "Unknown genre"} · ` +
     `${winner.runtime ? formatLength(winner.runtime) : "Unknown length"} · ` +
     `${winner.rtScore}% 🍅`;
-  document.getElementById("resultOverview").textContent = winner.overview || "No summary available.";
+  document.getElementById("resultOverview").textContent =
+    (extras && extras.overview) || "No summary available.";
   renderProviderIcons(document.getElementById("resultProviders"), winner);
 
   const trailerWrap = document.getElementById("trailerWrap");
   const trailerFrame = document.getElementById("trailerFrame");
-  if (winner.trailerKey) {
-    trailerFrame.src = `https://www.youtube.com/embed/${winner.trailerKey}`;
+  if (extras && extras.trailerKey) {
+    trailerFrame.src = `https://www.youtube.com/embed/${extras.trailerKey}`;
     trailerWrap.hidden = false;
   } else {
     trailerFrame.src = "";
@@ -560,6 +484,10 @@ async function spin() {
   const winner = pool[Math.floor(Math.random() * pool.length)];
   lastWinnerKey = movieKey(winner);
 
+  // Fire the winner's blurb/trailer lookup now and await it after the reels
+  // finish — a ~100-300ms call under ~2.5s of animation, so it's never seen.
+  const extrasPromise = fetchWinnerExtras(winner.id);
+
   // Cycle through random posters, slowing down, then land on the winner.
   const flips = 14;
   for (let i = 0; i < flips; i++) {
@@ -573,7 +501,7 @@ async function spin() {
   reelPoster.src = posterUrl(winner.posterPath);
 
   // Fill the result card before the curtains open so it's ready the instant they part.
-  fillResult(winner);
+  fillResult(winner, await extrasPromise);
 
   slotMachine.classList.remove("spinning");
   slotMachine.hidden = true;
@@ -645,10 +573,18 @@ async function init() {
   const spinBtn = document.getElementById("spinButton");
   spinBtn.disabled = true;
 
-  await fetchProviderLogos();
-  buildStreamingIcons(document.getElementById("streamingGroup"));
+  try {
+    await loadMovieData();
+  } catch (err) {
+    // The bundle is the whole catalog, so there's no partial mode to fall back
+    // to — say so plainly rather than leaving a dead button with no reason.
+    console.error("Failed to load the movie bundle:", err);
+    statusEl.textContent = "Couldn't load the movie list — check your connection and refresh.";
+    return;
+  }
 
-  await loadMovieData(statusEl);
+  // Needs the service list from the bundle, so it can't run any earlier.
+  buildStreamingIcons(document.getElementById("streamingGroup"));
   warnAboutUnrecognizedYears(movieDatabase);
 
   statusEl.textContent = `Ready — ${movieDatabase.length} movies loaded.`;

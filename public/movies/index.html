@@ -16,6 +16,11 @@
   <link rel="apple-touch-icon" href="/movies/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Starts the catalog download during HTML parse instead of waiting for
+       app.js to parse and run — it's the one thing gating the Spin button. -->
+  <link rel="preload" href="/movies/movies.json" as="fetch" type="application/json" />
+  <!-- Posters come from TMDB's image CDN the moment a spin starts. -->
+  <link rel="preconnect" href="https://image.tmdb.org" />
   <link
     href="https://fonts.googleapis.com/css2?family=Bungee&family=Comic+Neue:wght@400;700&display=swap"
     rel="stylesheet"
@@ -127,8 +132,9 @@
     <p id="statusMessage" class="status"></p>
   </div>
 
+  <!-- movies.js is still the hand-edited catalog, but it's no longer shipped to
+       the browser: scripts/build-movie-data.mjs turns it into movies.json. -->
   <script src="/movies/config.js"></script>
-  <script src="/movies/movies.js"></script>
   <script src="/movies/app.js"></script>
   <script defer src="/_vercel/insights/script.js"></script>
 </body>
