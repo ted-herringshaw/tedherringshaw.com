@@ -63,6 +63,27 @@ const SHARE_MESSAGE = "It's movie night, baby!";
 
 const PALETTE = ["#ff2bd0", "#38f0ff", "#b6ff3b", "#ff8a3b", "#ffe600", "#a24bff", "#ff5b8a", "#3bd0ff"];
 
+// Sound-effect words flung across the stage mid-spin. Two pools so the noise
+// suits the moment: mechanical clatter while the reels are turning, then a
+// celebration once a movie lands. Drawn at random every spin so the machine
+// never sounds quite the same twice.
+const SPIN_SOUNDS = [
+  "KA-CHUNK!", "BRRRRRR...", "🎰 SPINNIN'!", "CLICK-CLACK!", "WHIRRRR!",
+  "CHK-CHK-CHK!", "RATTLE-RATTLE!", "CLATTER!", "ZZZZIP!", "KLUNK!",
+  "TICKA-TICKA!", "RUMBLE!", "VRRRRM!", "WHIRLY-WHIRL!", "CLINKETY-CLINK!",
+  "THUNKA-THUNKA!", "WOBBLE-WOBBLE!", "ZOOM-ZOOM!", "CHUGGA-CHUGGA!",
+  "FLIPPITY-FLIP!", "SHUFFLE-SHUFFLE!", "GRRRIND!", "WHIZZ-BANG!", "RAT-A-TAT!",
+];
+
+const WIN_SOUNDS = [
+  "🎉 TA-DAAA!", "WINNER!", "🍿 POW!", "JACKPOT!", "BINGO!", "KA-POW!",
+  "BOOM!", "ZOWIE!", "YOWZA!", "HOT DANG!", "BULLSEYE!", "DING-DING-DING!",
+  "WOO-HOO!", "KABLAM!", "SHAZAM!", "EUREKA!", "BADA-BING!", "HUZZAH!",
+  "YAHTZEE!", "SCORE!", "NAILED IT!", "OH BABY!", "🍿 THAT'S THE ONE!",
+  "LOCKED IN!", "SIZZLE!", "🎬 ACTION!", "BOOM-SHAKA!", "🌟 STARRING!",
+  "HOT TICKET!", "🎟️ SOLD OUT!",
+];
+
 // ---------- State ----------
 
 let movieDatabase = []; // unpacked from movies.json on load
@@ -277,6 +298,17 @@ function ding(text, color) {
   el.style.top = `${18 + Math.random() * 60}%`;
   fxLayer.appendChild(el);
   setTimeout(() => el.remove(), 1300);
+}
+
+// Throws an unused word from `pool` in a random palette colour. `used` is
+// carried across a single spin so one spin never repeats itself; if a pool runs
+// dry it falls back to the full list rather than going silent.
+function randomDing(pool, used) {
+  const unheard = pool.filter((word) => !used.has(word));
+  const choices = unheard.length > 0 ? unheard : pool;
+  const word = choices[Math.floor(Math.random() * choices.length)];
+  used.add(word);
+  ding(word, PALETTE[Math.floor(Math.random() * PALETTE.length)]);
 }
 
 function burstPopcorn() {
@@ -540,14 +572,13 @@ async function revealPick(tmdbId) {
   lastWinnerKey = movieKey(movie);
 
   fillResult(movie, await fetchWinnerExtras(movie.id));
-  document.getElementById("sharedBanner").hidden = false;
 
   resultSection.hidden = false;
   resultSection.classList.add("reveal");
   stage.classList.add("open");
   showPickActions();
   burstPopcorn();
-  ding("🍿 ENJOY!", "#ffe600");
+  randomDing(WIN_SOUNDS, new Set());
   return true;
 }
 
@@ -572,13 +603,13 @@ async function spin() {
   stage.classList.remove("open");
   stageIdle.hidden = true;
   resultSection.hidden = true;
-  // Once they spin for themselves, it's their pick, not the one they were sent.
-  document.getElementById("sharedBanner").hidden = true;
   document.getElementById("trailerFrame").src = ""; // stop any trailer still playing from the previous winner
   slotMachine.hidden = false;
   slotMachine.classList.add("spinning");
 
-  ding("KA-CHUNK!", "#ffe600");
+  // Shared across this one spin so the same word can't land twice in a row.
+  const heard = new Set();
+  randomDing(SPIN_SOUNDS, heard);
 
   // Never land on the same movie twice in a row — unless every match shares
   // the previous winner's key (e.g. a duplicate title+year), in which case
@@ -600,8 +631,8 @@ async function spin() {
     reelPoster.src = posterUrl(random.posterPath);
     const delay = 60 + i * 18; // ramps from fast to slow
     await sleep(delay);
-    if (i === 4) ding("BRRRRRR...", "#ff2bd0");
-    if (i === 9) ding("🎰 SPINNIN'!", "#38f0ff");
+    if (i === 4) randomDing(SPIN_SOUNDS, heard);
+    if (i === 9) randomDing(SPIN_SOUNDS, heard);
   }
   reelPoster.src = posterUrl(winner.posterPath);
 
@@ -618,11 +649,11 @@ async function spin() {
   showPickActions();
 
   burstPopcorn();
-  ding("🎉 TA-DAAA!", "#b6ff3b");
+  randomDing(WIN_SOUNDS, heard);
   await sleep(250);
-  ding("WINNER!", "#ff8a3b");
+  randomDing(WIN_SOUNDS, heard);
   await sleep(250);
-  ding("🍿 POW!", "#ff5b8a");
+  randomDing(WIN_SOUNDS, heard);
 
   spinBtn.disabled = false;
 }

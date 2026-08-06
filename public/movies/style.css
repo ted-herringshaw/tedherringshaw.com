@@ -481,9 +481,8 @@ body {
   border-bottom: 3px solid #000;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 4px;
 }
 .stage-valance span {
   font-family: "Bungee", cursive;
@@ -713,26 +712,6 @@ body {
   color: #666;
   font-size: 11px;
   font-weight: 700;
-}
-
-/* ---------- "A friend sent you this" banner ---------- */
-
-.shared-banner {
-  margin: 0 0 7px;
-  padding: 6px 12px;
-  font-family: "Bungee", cursive;
-  font-size: 11px;
-  letter-spacing: 0.4px;
-  text-align: center;
-  color: #2b0a75;
-  background: var(--cyan);
-  border: 3px solid #000;
-  border-radius: 20px;
-  box-shadow: 3px 3px 0 #000;
-  transform: rotate(-0.8deg);
-}
-.shared-banner[hidden] {
-  display: none;
 }
 
 .trailer-wrap {
