@@ -105,6 +105,18 @@ function movieKey(movie) {
   return `${movie.title}|${movie.year}`;
 }
 
+// Vercel Web Analytics custom event. The script is loaded from index.html; if
+// it hasn't arrived — still loading, blocked by an ad blocker, offline — then
+// window.va is undefined and this quietly does nothing. Measurement must never
+// be able to break a spin.
+function track(name, data) {
+  try {
+    if (typeof window.va === "function") window.va("event", { name, data });
+  } catch {
+    // Deliberately swallowed: a failed beacon is not worth surfacing.
+  }
+}
+
 function formatLength(minutes) {
   if (minutes < 60) return `${minutes} min`;
   const h = Math.floor(minutes / 60);
@@ -526,9 +538,15 @@ async function shareCurrentPick() {
   const label = document.getElementById("shareButtonLabel");
   const url = `${SHARE_BASE}/${currentWinner.id}`;
 
+  // Tapped and completed are tracked separately: the gap between them is people
+  // opening the share sheet and backing out, which is worth being able to see.
+  const method = prefersNativeShare() ? "native" : "copy";
+  track("share_tapped", { method, movie: currentWinner.title });
+
   if (prefersNativeShare()) {
     try {
       await navigator.share({ title: "Movie Night, Baby!", text: SHARE_MESSAGE, url });
+      track("share_completed", { method: "native", movie: currentWinner.title });
       ding("🎟️ SENT!", "#b6ff3b");
     } catch (err) {
       // Dismissing the share sheet rejects with AbortError. That's a choice,
@@ -540,6 +558,7 @@ async function shareCurrentPick() {
 
   try {
     await navigator.clipboard.writeText(`${SHARE_MESSAGE} ${url}`);
+    track("share_completed", { method: "copy", movie: currentWinner.title });
     btn.classList.add("copied");
     label.textContent = "COPIED!";
     ding("🎟️ COPIED!", "#b6ff3b");
@@ -579,6 +598,9 @@ async function revealPick(tmdbId) {
   showPickActions();
   burstPopcorn();
   randomDing(WIN_SOUNDS, new Set());
+  // The payoff event: someone actually followed a link a friend sent them.
+  // This is what tells us whether sharing is doing anything.
+  track("shared_link_opened", { movie: movie.title });
   return true;
 }
 
@@ -619,6 +641,9 @@ async function spin() {
   const winner = pool[Math.floor(Math.random() * pool.length)];
   lastWinnerKey = movieKey(winner);
   currentWinner = winner;
+
+  // The denominator for the share rate: how many picks people saw at all.
+  track("spin", { movie: winner.title });
 
   // Fire the winner's blurb/trailer lookup now and await it after the reels
   // finish — a ~100-300ms call under ~2.5s of animation, so it's never seen.
