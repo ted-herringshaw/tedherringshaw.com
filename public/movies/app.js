@@ -471,10 +471,22 @@ function showPickActions() {
   document.getElementById("statusMessage").textContent = "";
 }
 
-// Hands off to the OS share sheet where there is one — that's the whole point
-// on a phone, since it puts Messages one tap away. Desktop browsers mostly
-// don't implement navigator.share, so those fall back to copying the link,
-// following the same copy-then-revert pattern as the site's contact buttons.
+// Whether to hand off to the OS share sheet. It's the right call on a phone —
+// Messages is one tap away, and iOS composes the message text and the link
+// together. It is NOT the right call on desktop: macOS supports navigator.share
+// but its share sheet passes only the URL to Messages, silently dropping the
+// text, so "It's movie night, baby!" never arrives. Copying is fully under our
+// control, so desktop takes that path and gets the whole message.
+//
+// Touch capability is the signal, not screen width: a small browser window on a
+// laptop still wants the clipboard, and a tablet still wants the share sheet.
+function prefersNativeShare() {
+  return typeof navigator.share === "function" && window.matchMedia("(pointer: coarse)").matches;
+}
+
+// On a phone this opens the OS share sheet. Everywhere else it copies the
+// message and link together, confirming in place — the same copy-then-revert
+// pattern the site's contact buttons already use.
 async function shareCurrentPick() {
   if (!currentWinner) return;
 
@@ -482,7 +494,7 @@ async function shareCurrentPick() {
   const label = document.getElementById("shareButtonLabel");
   const url = `${SHARE_BASE}/${currentWinner.id}`;
 
-  if (navigator.share) {
+  if (prefersNativeShare()) {
     try {
       await navigator.share({ title: "Movie Night, Baby!", text: SHARE_MESSAGE, url });
       ding("🎟️ SENT!", "#b6ff3b");
