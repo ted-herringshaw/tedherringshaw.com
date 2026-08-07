@@ -148,6 +148,13 @@
     <p id="statusMessage" class="status"></p>
   </div>
 
+  <!-- Outside .app on purpose: .app becomes a grid with fixed areas on mobile,
+       and the footer has no business being one of them. -->
+  <footer class="site-footer">
+    <a href="/">Built by Ted Herringshaw</a> · This product uses the TMDB API but is
+    not endorsed or certified by TMDB.
+  </footer>
+
   <!-- movies.js is still the hand-edited catalog, but it's no longer shipped to
        the browser: scripts/build-movie-data.mjs turns it into movies.json. -->
   <script src="/movies/config.js"></script>
