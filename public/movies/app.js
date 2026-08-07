@@ -40,7 +40,7 @@ const LENGTH_STEPS = [
   { label: "2h 40m", max: 160 },
   { label: "2h 50m", max: 170 },
   { label: "3h 00m", max: 180 },
-  { label: "3+ hour marathons", max: Infinity },
+  { label: "Any Length", max: Infinity },
 ];
 
 // Everything needed to filter and display the catalog, pre-resolved against
