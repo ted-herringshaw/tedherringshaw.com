@@ -410,6 +410,7 @@ async function loadMovieData() {
     rtScore: row[idx.rtScore],
     runtime: row[idx.runtime],
     posterPath: row[idx.posterPath],
+    rentable: row[idx.rentable] === 1,
     genres: unpackMask(row[idx.genreMask], GENRE_VOCABULARY),
     // Service objects, not names — matchesFilters() and renderProviderIcons()
     // both key off `.key`, so TMDB's provider-name aliasing is resolved once
@@ -461,9 +462,17 @@ function renderProviderIcons(container, movie) {
   container.innerHTML = "";
   const services = movie.services.filter((s) => s.logoPath);
   if (services.length === 0) {
+    // 97% of the movies with no subscription can still be rented, so saying so
+    // turns a dead end into an answer. No storefronts named: nearly all of them
+    // are on all five majors, but not quite all, and TMDB publishes no prices.
     const span = document.createElement("span");
     span.className = "no-providers";
-    span.textContent = "Not currently on a major streaming subscription.";
+    // The final fallback is only reachable by a handful of titles, and they're
+    // typically on a smaller ad-supported service we deliberately don't list —
+    // so it says what isn't true rather than claiming the film is unfindable.
+    span.textContent = movie.rentable
+      ? "Not on a subscription — available to rent or buy."
+      : "Not on a major subscription or rental.";
     container.appendChild(span);
     return;
   }

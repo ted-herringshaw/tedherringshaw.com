@@ -151,6 +151,22 @@ async function enrichMovie(movie, genreIndexById, serviceIndexByProviderName) {
       append_to_response: "watch/providers",
     });
 
+    const offers = details["watch/providers"]?.results?.[REGION] || {};
+
+    // A picker for tonight shouldn't offer a film you can't watch tonight. The
+    // test is home availability, not the release date: the 2026 titles that
+    // broke this were all "Released" months ago and still only in cinemas.
+    // Anything with no US offer of any kind — no subscription, rental,
+    // purchase, or ad-supported stream — is held out of the built catalog.
+    //
+    // Left in movies.js on purpose, so each one reappears by itself on the
+    // first weekly refresh after it lands on a home platform.
+    const offerCount = ["flatrate", "rent", "buy", "ads", "free"]
+      .reduce((n, kind) => n + (offers[kind] || []).length, 0);
+    if (offerCount === 0) {
+      return { status: "unwatchable", releaseDate: details.release_date || "unknown" };
+    }
+
     let genreMask = 0;
     for (const g of details.genres || []) {
       const bit = genreIndexById.get(g.id);
@@ -158,11 +174,16 @@ async function enrichMovie(movie, genreIndexById, serviceIndexByProviderName) {
     }
 
     let providerMask = 0;
-    const flatrate = details["watch/providers"]?.results?.[REGION]?.flatrate || [];
-    for (const p of flatrate) {
+    for (const p of offers.flatrate || []) {
       const bit = serviceIndexByProviderName.get(p.provider_name);
       if (bit !== undefined) providerMask |= 1 << bit;
     }
+
+    // Whether it can be rented or bought at all — stored as a plain flag rather
+    // than a list of storefronts. 97% of rentables are on all five majors, so
+    // naming them would be right most of the time and wrong often enough to
+    // matter, and TMDB publishes no prices to show alongside them anyway.
+    const rentable = (offers.rent || []).length > 0 || (offers.buy || []).length > 0 ? 1 : 0;
 
     return {
       status: "ok",
@@ -179,6 +200,7 @@ async function enrichMovie(movie, genreIndexById, serviceIndexByProviderName) {
         // tall poster gets centre-cropped and the title art is sliced in half.
         backdropPath: details.backdrop_path || null,
         providerMask,
+        rentable,
       },
     };
   } catch (err) {
@@ -229,6 +251,14 @@ async function main() {
   const ok = results.filter((r) => r.result.status === "ok");
   const notFound = results.filter((r) => r.result.status === "notFound");
   const errored = results.filter((r) => r.result.status === "error");
+  const unwatchable = results.filter((r) => r.result.status === "unwatchable");
+
+  if (unwatchable.length > 0) {
+    console.log(`\n${unwatchable.length} title(s) with no way to watch them at home — held out of the catalog:`);
+    for (const r of unwatchable.sort((a, b) => a.result.releaseDate.localeCompare(b.result.releaseDate))) {
+      console.log(`  ${r.result.releaseDate}  ${r.movie.title}`);
+    }
+  }
 
   if (notFound.length > 0) {
     console.log(`\n${notFound.length} title(s) with no TMDB match — fix the title/year in movies.js:`);
@@ -257,10 +287,14 @@ async function main() {
     console.log("  Fix by removing the duplicate, or pin the right film with tmdbId in movies.js.");
   }
 
-  const hitRate = ok.length / curated.length;
+  // Titles held out for having nowhere to watch are a deliberate exclusion, so
+  // they come out of the denominator — otherwise a run of cinema-only releases
+  // would look like a failing fetch and trip the floor for no reason.
+  const expected = curated.length - unwatchable.length;
+  const hitRate = ok.length / expected;
   if (hitRate < MIN_HIT_RATE) {
     throw new Error(
-      `Only ${ok.length}/${curated.length} movies resolved (${(hitRate * 100).toFixed(1)}%, ` +
+      `Only ${ok.length}/${expected} released movies resolved (${(hitRate * 100).toFixed(1)}%, ` +
         `floor is ${(MIN_HIT_RATE * 100).toFixed(0)}%). Refusing to write a truncated catalog.`
     );
   }
@@ -271,7 +305,10 @@ async function main() {
   // Deliberately excludes backdropPath: only the share-page build reads it, and
   // carrying ~995 more paths here would add ~20 KB brotli to every visitor's
   // first load for data the browser never touches. It goes to BACKDROPS_FILE.
-  const fields = ["id", "title", "year", "rtScore", "runtime", "genreMask", "posterPath", "providerMask"];
+  const fields = [
+    "id", "title", "year", "rtScore", "runtime",
+    "genreMask", "posterPath", "providerMask", "rentable",
+  ];
   const bundle = {
     version: 1,
     generatedAt: new Date().toISOString(),
